@@ -37,7 +37,7 @@ Canvas Pet is a browser-based virtual pet that users can interact with, feed, pl
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/canvas-pet.git
+git clone https://github.com/adv-andrew/canvas-pet.git
 cd canvas-pet
 
 # Install dependencies
