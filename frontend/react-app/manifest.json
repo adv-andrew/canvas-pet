@@ -11,7 +11,7 @@
   ],
   "host_permissions": [
     "https://*.instructure.com/*",
-    "https://*.supabase.co/*"
+    "http://localhost:3000/*"
   ],
 
   "background": {
