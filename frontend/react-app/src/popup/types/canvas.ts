@@ -44,7 +44,7 @@ export interface CanvasAnnouncement {
 
 export interface SavedAssignment {
   id: string
-  user_canvas_id: string
+  canvas_user_id: string
   institution_url: string
   assignment_id: number
   plannable_type: string
