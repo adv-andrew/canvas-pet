@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { CanvasPlannerItem, TrackedAssignment, CanvasAnnouncement } from '../types/canvas'
-import { useSupabase } from './useSupabase'
+import { supabaseAuth } from '../lib/supabaseAuthClient'
+import {
+  apiRegisterCanvasUser,
+  apiFetchSavedIds,
+  apiSaveAssignment,
+  apiUnsaveAssignment,
+} from '../lib/api'
 
 interface CanvasDataResult {
   assignments: TrackedAssignment[]
@@ -27,13 +33,12 @@ interface ContentScriptResponse {
 export function useCanvasData(): CanvasDataResult {
   const [rawItems, setRawItems] = useState<CanvasPlannerItem[]>([])
   const [announcements, setAnnouncements] = useState<CanvasAnnouncement[]>([])
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isOnCanvas, setIsOnCanvas] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [institutionUrl, setInstitutionUrl] = useState<string | null>(null)
-
-  const { savedIds, saveAssignment, unsaveAssignment } = useSupabase(userId, institutionUrl)
 
   const fetchData = useCallback(() => {
     setLoading(true)
@@ -61,11 +66,30 @@ export function useCanvasData(): CanvasDataResult {
             setLoading(false)
             return
           }
+
+          const canvasUserId = response.userId ?? null
+          const instUrl = response.institutionUrl ?? null
           setRawItems(response.items ?? [])
           setAnnouncements(response.announcements ?? [])
-          setUserId(response.userId ?? null)
-          setInstitutionUrl(response.institutionUrl ?? null)
-          setLoading(false)
+          setUserId(canvasUserId)
+          setInstitutionUrl(instUrl)
+
+          if (!canvasUserId || !instUrl) {
+            setLoading(false)
+            return
+          }
+
+          // Sign in anonymously (idempotent — returns existing session if present),
+          // register/update the Canvas identity on the backend, then fetch saved IDs.
+          supabaseAuth.auth
+            .signInAnonymously()
+            .then(() =>
+              apiRegisterCanvasUser({ canvas_user_id: canvasUserId, institution_url: instUrl }),
+            )
+            .then(() => apiFetchSavedIds(instUrl))
+            .then((ids) => setSavedIds(new Set(ids)))
+            .catch((err: Error) => setError(err.message))
+            .finally(() => setLoading(false))
         },
       )
     })
@@ -74,6 +98,28 @@ export function useCanvasData(): CanvasDataResult {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  const saveAssignment = useCallback(
+    async (item: CanvasPlannerItem) => {
+      if (!userId || !institutionUrl) return
+      await apiSaveAssignment(item, userId, institutionUrl)
+      setSavedIds((prev) => new Set([...prev, item.plannable_id]))
+    },
+    [userId, institutionUrl],
+  )
+
+  const unsaveAssignment = useCallback(
+    async (assignmentId: number) => {
+      if (!institutionUrl) return
+      await apiUnsaveAssignment(assignmentId, institutionUrl)
+      setSavedIds((prev) => {
+        const next = new Set(prev)
+        next.delete(assignmentId)
+        return next
+      })
+    },
+    [institutionUrl],
+  )
 
   const assignments: TrackedAssignment[] = rawItems.map((item) => ({
     ...item,
