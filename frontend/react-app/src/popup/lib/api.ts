@@ -3,6 +3,26 @@ import type { CanvasPlannerItem } from '../types/canvas'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string
 
+// Bootstraps a Supabase session from the Canvas identity.
+// No auth header required — this endpoint IS the auth step.
+export async function apiExtensionAuth(params: {
+  canvas_user_id: string
+  institution_url: string
+  display_name?: string | null
+  email?: string | null
+}): Promise<{ access_token: string; refresh_token: string; expires_in: number }> {
+  const res = await fetch(`${BACKEND_URL}/api/auth/extension`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
+  return res.json() as Promise<{ access_token: string; refresh_token: string; expires_in: number }>
+}
+
 async function getAuthHeader(): Promise<string> {
   const { data } = await supabaseAuth.auth.getSession()
   const token = data.session?.access_token

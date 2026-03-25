@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import type { CanvasPlannerItem, TrackedAssignment, CanvasAnnouncement } from '../types/canvas'
 import { supabaseAuth } from '../lib/supabaseAuthClient'
 import {
+  apiExtensionAuth,
   apiRegisterCanvasUser,
   apiFetchSavedIds,
   apiSaveAssignment,
@@ -27,6 +28,8 @@ interface ContentScriptResponse {
   announcements?: CanvasAnnouncement[]
   userId?: string
   institutionUrl?: string
+  displayName?: string | null
+  email?: string | null
   error?: string
 }
 
@@ -79,15 +82,38 @@ export function useCanvasData(): CanvasDataResult {
             return
           }
 
-          // Sign in anonymously (idempotent — returns existing session if present),
-          // register/update the Canvas identity on the backend, then fetch saved IDs.
-          supabaseAuth.auth
-            .signInAnonymously()
-            .then(() =>
-              apiRegisterCanvasUser({ canvas_user_id: canvasUserId, institution_url: instUrl }),
-            )
-            .then(() => apiFetchSavedIds(instUrl))
-            .then((ids) => setSavedIds(new Set(ids)))
+          // Auth + saved IDs flow:
+          // 1. If no session exists, call /api/auth/extension which atomically creates/finds
+          //    the Supabase user AND upserts the canvas_users row, then returns session tokens.
+          // 2. If a session already exists, fire-and-forget a profile refresh (name/email may change).
+          // 3. Fetch saved assignment IDs with the now-guaranteed valid session.
+          const run = async () => {
+            const { data: sessionData } = await supabaseAuth.auth.getSession()
+
+            if (!sessionData.session) {
+              const tokens = await apiExtensionAuth({
+                canvas_user_id: canvasUserId,
+                institution_url: instUrl,
+                display_name: response.displayName ?? undefined,
+                email: response.email ?? undefined,
+              })
+              const { error: setErr } = await supabaseAuth.auth.setSession({
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+              })
+              if (setErr) throw new Error(setErr.message)
+            } else {
+              void apiRegisterCanvasUser({
+                canvas_user_id: canvasUserId,
+                institution_url: instUrl,
+              })
+            }
+
+            const ids = await apiFetchSavedIds(instUrl)
+            setSavedIds(new Set(ids))
+          }
+
+          run()
             .catch((err: Error) => setError(err.message))
             .finally(() => setLoading(false))
         },
