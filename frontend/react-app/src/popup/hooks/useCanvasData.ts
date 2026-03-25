@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { CanvasPlannerItem, TrackedAssignment, CanvasAnnouncement } from '../types/canvas'
+import type { CanvasPlannerItem, TrackedAssignment, CanvasAnnouncement } from '../../shared/types/canvas'
 import { supabaseAuth } from '../lib/supabaseAuthClient'
 import {
   apiExtensionAuth,
