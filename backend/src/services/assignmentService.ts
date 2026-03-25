@@ -1,11 +1,11 @@
-import { supabaseAdmin } from '../lib/supabaseAdmin'
+import { getSupabaseAdmin } from '../lib/supabaseAdmin'
 import type { SaveAssignmentInput } from '../schemas/assignments'
 
 export async function fetchSavedAssignments(
   canvasUserId: string,
   institutionUrl: string,
 ) {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('saved_assignments')
     .select('*')
     .eq('canvas_user_id', canvasUserId)
@@ -15,7 +15,7 @@ export async function fetchSavedAssignments(
 }
 
 export async function saveAssignment(input: SaveAssignmentInput) {
-  const { error } = await supabaseAdmin
+  const { error } = await getSupabaseAdmin()
     .from('saved_assignments')
     .upsert(
       {
@@ -35,7 +35,7 @@ export async function unsaveAssignment(
   institutionUrl: string,
   assignmentId: number,
 ) {
-  const { error } = await supabaseAdmin
+  const { error } = await getSupabaseAdmin()
     .from('saved_assignments')
     .delete()
     .eq('canvas_user_id', canvasUserId)

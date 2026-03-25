@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyJwt } from '../../../../src/lib/verifyJwt'
-import { supabaseAdmin } from '../../../../src/lib/supabaseAdmin'
+import { getSupabaseAdmin } from '../../../../src/lib/supabaseAdmin'
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204 })
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   try {
     const { userId } = await verifyJwt(req.headers.get('Authorization'))
 
-    const { data: canvasUser } = await supabaseAdmin
+    const { data: canvasUser } = await getSupabaseAdmin()
       .from('canvas_users')
       .select('canvas_user_id, institution_url, display_name, email')
       .eq('id', userId)
