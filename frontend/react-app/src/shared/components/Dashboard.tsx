@@ -15,7 +15,7 @@ interface Props {
   googleAvatar?: string
 }
 
-export function groupAssignments(items: TrackedAssignment[]) {
+function groupAssignments(items: TrackedAssignment[]) {
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const weekEnd = new Date(today)
