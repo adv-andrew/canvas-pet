@@ -1,8 +1,43 @@
+import { createHmac } from 'crypto'
 import { supabaseAdmin } from '../lib/supabaseAdmin'
-import type { RegisterCanvasUserInput } from '../schemas/auth'
+import type { RegisterCanvasUserInput, ExtensionAuthInput } from '../schemas/auth'
+
+// Creates or signs in the Supabase Auth user for a given Canvas identity, then
+// upserts their canvas_users row atomically. No JWT required — this IS the auth step.
+// The password is a keyed HMAC so external actors cannot forge credentials without
+// knowing EXTENSION_SECRET.
+export async function signInExtensionUser(input: ExtensionAuthInput) {
+  const secret = process.env.EXTENSION_SECRET!
+  const email = `canvas_${input.canvas_user_id}@canvaspet.internal`
+  const password = createHmac('sha256', secret)
+    .update(`${input.canvas_user_id}:${input.institution_url}`)
+    .digest('hex')
+
+  // Happy path: returning user — sign in and update canvas_users
+  const { data: signInData, error: signInError } =
+    await supabaseAdmin.auth.signInWithPassword({ email, password })
+
+  if (!signInError && signInData.session) {
+    await upsertCanvasUser(signInData.session.user.id, input)
+    return signInData.session
+  }
+
+  // New user — create auth account, upsert canvas_users, then sign in
+  const { data: created, error: createError } =
+    await supabaseAdmin.auth.admin.createUser({ email, password, email_confirm: true })
+  if (createError || !created.user) {
+    throw new Error(`Failed to create extension user: ${createError?.message}`)
+  }
+  await upsertCanvasUser(created.user.id, input)
+
+  const { data, error } = await supabaseAdmin.auth.signInWithPassword({ email, password })
+  if (error || !data.session) throw new Error(`Extension auth failed: ${error?.message}`)
+  return data.session
+}
 
 // Upserts a canvas_users row keyed on the Supabase Auth user ID.
-// Called after the client signs in anonymously and reports their Canvas identity.
+// Called atomically inside signInExtensionUser (new users) and by POST /api/auth
+// (subsequent sessions / web app token flow).
 export async function upsertCanvasUser(
   supabaseAuthUserId: string,
   input: RegisterCanvasUserInput,
