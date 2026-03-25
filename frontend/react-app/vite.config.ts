@@ -20,6 +20,7 @@ export default defineConfig({
         popup: resolve(__dirname, 'popup.html'),
         background: resolve(__dirname, 'src/service_worker/background.ts'),
         content_script: resolve(__dirname, 'src/content_script/content.ts'),
+        webapp: resolve(__dirname, 'index.html'),
       },
       output: {
         entryFileNames: '[name].js',
