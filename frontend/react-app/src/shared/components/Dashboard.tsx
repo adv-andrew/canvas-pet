@@ -12,9 +12,10 @@ interface Props {
   onUnsave: (id: number) => Promise<void>
   onRefresh: () => void
   onLinkGoogle?: () => Promise<void>
+  googleAvatar?: string
 }
 
-function groupAssignments(items: TrackedAssignment[]) {
+export function groupAssignments(items: TrackedAssignment[]) {
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const weekEnd = new Date(today)
@@ -63,7 +64,7 @@ function GroupSection({ title, items, onSave, onUnsave }: GroupSectionProps) {
   )
 }
 
-export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onLinkGoogle }: Props) {
+export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onLinkGoogle, googleAvatar }: Props) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
   const [linkState, setLinkState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
 
@@ -84,9 +85,16 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <h1>Canvas Todo</h1>
+        <h1>Canvas Pet</h1>
         <div className="header-actions">
-          {onLinkGoogle && linkState !== 'done' && (
+          {googleAvatar ? (
+            <img
+              src={googleAvatar}
+              className="google-avatar"
+              title="Google account linked"
+              alt="Google account linked"
+            />
+          ) : onLinkGoogle && linkState !== 'done' ? (
             <button
               className="link-google-btn"
               onClick={handleLinkGoogle}
@@ -95,10 +103,9 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
             >
               {linkState === 'loading' ? '…' : linkState === 'error' ? 'Failed' : 'Link Google'}
             </button>
-          )}
-          {linkState === 'done' && (
+          ) : linkState === 'done' ? (
             <span className="link-google-success">Google linked ✓</span>
-          )}
+          ) : null}
           <button className="refresh-btn" onClick={onRefresh} title="Refresh" disabled={loading}>
             ↻
           </button>
