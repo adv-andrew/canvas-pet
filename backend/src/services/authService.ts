@@ -1,5 +1,5 @@
 import { createHmac } from 'crypto'
-import { supabaseAdmin } from '../lib/supabaseAdmin'
+import { getSupabaseAdmin } from '../lib/supabaseAdmin'
 import type { RegisterCanvasUserInput, ExtensionAuthInput } from '../schemas/auth'
 
 // Creates or signs in the Supabase Auth user for a given Canvas identity, then
@@ -15,7 +15,7 @@ export async function signInExtensionUser(input: ExtensionAuthInput) {
 
   // Happy path: returning user — sign in and update canvas_users
   const { data: signInData, error: signInError } =
-    await supabaseAdmin.auth.signInWithPassword({ email, password })
+    await getSupabaseAdmin().auth.signInWithPassword({ email, password })
 
   if (!signInError && signInData.session) {
     await upsertCanvasUser(signInData.session.user.id, input)
@@ -24,13 +24,13 @@ export async function signInExtensionUser(input: ExtensionAuthInput) {
 
   // New user — create auth account, upsert canvas_users, then sign in
   const { data: created, error: createError } =
-    await supabaseAdmin.auth.admin.createUser({ email, password, email_confirm: true })
+    await getSupabaseAdmin().auth.admin.createUser({ email, password, email_confirm: true })
   if (createError || !created.user) {
     throw new Error(`Failed to create extension user: ${createError?.message}`)
   }
   await upsertCanvasUser(created.user.id, input)
 
-  const { data, error } = await supabaseAdmin.auth.signInWithPassword({ email, password })
+  const { data, error } = await getSupabaseAdmin().auth.signInWithPassword({ email, password })
   if (error || !data.session) throw new Error(`Extension auth failed: ${error?.message}`)
   return data.session
 }
@@ -42,7 +42,7 @@ export async function upsertCanvasUser(
   supabaseAuthUserId: string,
   input: RegisterCanvasUserInput,
 ): Promise<void> {
-  const { error } = await supabaseAdmin
+  const { error } = await getSupabaseAdmin()
     .from('canvas_users')
     .upsert(
       {
@@ -64,7 +64,7 @@ export async function upsertCanvasUser(
 export async function getCanvasUserIdForAuthUser(
   supabaseAuthUserId: string,
 ): Promise<string> {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('canvas_users')
     .select('canvas_user_id')
     .eq('id', supabaseAuthUserId)
