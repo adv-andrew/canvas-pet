@@ -11,6 +11,7 @@ interface Props {
   onSave: (item: CanvasPlannerItem) => Promise<void>
   onUnsave: (id: number) => Promise<void>
   onRefresh: () => void
+  onLinkGoogle?: () => Promise<void>
 }
 
 function groupAssignments(items: TrackedAssignment[]) {
@@ -62,8 +63,21 @@ function GroupSection({ title, items, onSave, onUnsave }: GroupSectionProps) {
   )
 }
 
-export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh }: Props) {
+export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onLinkGoogle }: Props) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
+  const [linkState, setLinkState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+
+  const handleLinkGoogle = async () => {
+    if (!onLinkGoogle || linkState === 'loading') return
+    setLinkState('loading')
+    try {
+      await onLinkGoogle()
+      setLinkState('done')
+    } catch {
+      setLinkState('error')
+      setTimeout(() => setLinkState('idle'), 3000)
+    }
+  }
   const groups = groupAssignments(assignments)
   const hasAssignments = Object.values(groups).some((g) => g.length > 0)
 
@@ -71,9 +85,24 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
     <div className="dashboard">
       <header className="dashboard-header">
         <h1>Canvas Todo</h1>
-        <button className="refresh-btn" onClick={onRefresh} title="Refresh" disabled={loading}>
-          ↻
-        </button>
+        <div className="header-actions">
+          {onLinkGoogle && linkState !== 'done' && (
+            <button
+              className="link-google-btn"
+              onClick={handleLinkGoogle}
+              disabled={linkState === 'loading'}
+              title="Link Google Account for web app access"
+            >
+              {linkState === 'loading' ? '…' : linkState === 'error' ? 'Failed' : 'Link Google'}
+            </button>
+          )}
+          {linkState === 'done' && (
+            <span className="link-google-success">Google linked ✓</span>
+          )}
+          <button className="refresh-btn" onClick={onRefresh} title="Refresh" disabled={loading}>
+            ↻
+          </button>
+        </div>
       </header>
 
       <div className="tab-bar">
