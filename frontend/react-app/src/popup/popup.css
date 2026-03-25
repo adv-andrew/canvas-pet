@@ -80,6 +80,14 @@ body {
   color: rgba(255, 255, 255, 0.9);
 }
 
+.google-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  object-fit: cover;
+}
+
 .refresh-btn:disabled {
   opacity: 0.5;
   cursor: default;
