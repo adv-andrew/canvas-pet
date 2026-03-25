@@ -33,6 +33,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           announcements,
           userId: String(user.id),
           institutionUrl: window.location.origin,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          displayName: (user as any).name ?? null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          email: (user as any).primary_email ?? null,
         })
       })
       .catch((err: Error) => {
