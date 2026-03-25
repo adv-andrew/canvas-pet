@@ -70,3 +70,11 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Dummy values so supabaseAdmin initializes without throwing at
+          # module-load time during Next.js "collect page data". These are
+          # not real credentials and make no network calls during a build.
+          SUPABASE_URL: https://placeholder.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+          SUPABASE_ANON_KEY: placeholder-anon-key
+          EXTENSION_SECRET: placeholder-extension-secret
