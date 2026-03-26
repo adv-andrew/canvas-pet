@@ -54,7 +54,8 @@ body {
   gap: 6px;
 }
 
-.link-google-btn {
+
+.connect-app-btn {
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.6);
   color: white;
@@ -66,26 +67,17 @@ body {
   white-space: nowrap;
 }
 
-.link-google-btn:hover:not(:disabled) {
+.connect-app-btn:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.link-google-btn:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.link-google-success {
+.web-account-label {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.9);
-}
-
-.google-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  object-fit: cover;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .refresh-btn:disabled {
