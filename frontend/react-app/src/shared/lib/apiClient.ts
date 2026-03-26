@@ -96,6 +96,9 @@ export interface MeResponse {
   institution_url?: string
   display_name?: string | null
   email?: string | null
+  web_linked?: boolean
+  web_display_name?: string | null
+  web_email?: string | null
 }
 
 export async function apiClientGetMe(token: string): Promise<MeResponse> {
@@ -107,4 +110,19 @@ export async function apiClientGetMe(token: string): Promise<MeResponse> {
     throw new Error(error)
   }
   return res.json() as Promise<MeResponse>
+}
+
+export async function apiClientLinkCanvas(
+  params: { canvas_user_id: string; institution_url: string },
+  token: string,
+): Promise<void> {
+  const res = await fetch(`${BACKEND_URL}/api/auth/link-canvas`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
 }
