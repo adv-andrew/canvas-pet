@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { supabase } from '../lib/supabaseClient'
 
 interface Props {
   rewardPoints?: number
@@ -7,6 +8,11 @@ interface Props {
 export function NavBar({ rewardPoints = 0 }: Props) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    navigate('/sign-in')
+  }
 
   const link = (path: string, label: string) => (
     <button
@@ -52,6 +58,9 @@ export function NavBar({ rewardPoints = 0 }: Props) {
             <circle cx="12" cy="8" r="4" />
             <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
           </svg>
+        </button>
+        <button className="navbar-signout-btn" onClick={handleSignOut}>
+          Sign out
         </button>
       </div>
     </nav>
