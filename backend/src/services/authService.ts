@@ -1,6 +1,6 @@
 import { createHmac } from 'crypto'
 import { getSupabaseAdmin } from '../lib/supabaseAdmin'
-import type { RegisterCanvasUserInput, ExtensionAuthInput } from '../schemas/auth'
+import type { RegisterCanvasUserInput, ExtensionAuthInput, LinkCanvasInput } from '../schemas/auth'
 
 // Creates or signs in the Supabase Auth user for a given Canvas identity, then
 // upserts their canvas_users row atomically. No JWT required — this IS the auth step.
@@ -56,6 +56,27 @@ export async function upsertCanvasUser(
       { onConflict: 'id' },
     )
   if (error) throw new Error(`Failed to upsert canvas user: ${error.message}`)
+}
+
+// Links a web app user to a canvas_users row by canvas_user_id + institution_url.
+// Called by POST /api/auth/link-canvas after the web user signs in.
+export async function linkCanvasUser(
+  webSupabaseUserId: string,
+  webDisplayName: string | null,
+  webEmail: string | null,
+  input: LinkCanvasInput,
+): Promise<void> {
+  const { error } = await getSupabaseAdmin()
+    .from('canvas_users')
+    .update({
+      web_user_id: webSupabaseUserId,
+      web_display_name: webDisplayName,
+      web_email: webEmail,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('canvas_user_id', input.canvas_user_id)
+    .eq('institution_url', input.institution_url)
+  if (error) throw new Error(`Failed to link canvas user: ${error.message}`)
 }
 
 // Returns the Canvas user ID stored for a given Supabase Auth user.
