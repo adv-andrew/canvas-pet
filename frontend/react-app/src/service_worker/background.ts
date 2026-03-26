@@ -1,3 +1,3 @@
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Canvas Todo Dashboard installed')
+  console.log('Canvas Pet installed')
 })
