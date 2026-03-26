@@ -9,6 +9,7 @@
     "activeTab",
     "scripting"
   ],
+
   "host_permissions": [
     "https://*.instructure.com/*",
     "http://localhost:3000/*"
@@ -29,6 +30,13 @@
       "matches": ["https://*.instructure.com/*"],
       "js": ["content_script.js"],
       "run_at": "document_idle"
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": ["panel.html"],
+      "matches": ["https://*.instructure.com/*"]
     }
   ],
 

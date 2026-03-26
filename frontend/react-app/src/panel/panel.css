@@ -1,0 +1,62 @@
+@import '../popup/popup.css';
+
+/* Override the fixed 400px popup width — panel fills its iframe */
+body {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.dashboard {
+  min-height: 100vh;
+}
+
+/* Panel control buttons */
+.cp-panel {
+  position: relative;
+}
+
+.cp-expand-btn {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #e53e3e;
+  color: white;
+  border: none;
+  width: 20px;
+  height: 48px;
+  cursor: pointer;
+  font-size: 10px;
+  z-index: 10000;
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cp-expand-btn:hover {
+  background: #c53030;
+}
+
+.cp-minimize-btn {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 14px;
+  z-index: 10000;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.cp-minimize-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
