@@ -201,3 +201,80 @@ body {
   padding: 8px 12px;
   text-align: center;
 }
+
+/* Multi-auth section */
+.auth-methods {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 16px;
+}
+
+.auth-method-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.auth-method-row:last-child {
+  border-bottom: none;
+}
+
+.auth-method-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.auth-method-desc {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.auth-method-btn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.auth-method-btn:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.auth-method-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.auth-method-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.auth-method-input {
+  width: 100%;
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+.auth-method-success {
+  font-size: 12px;
+  color: #065f46;
+  background: #d1fae5;
+  border-radius: 6px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
