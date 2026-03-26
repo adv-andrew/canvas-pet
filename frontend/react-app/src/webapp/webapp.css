@@ -102,6 +102,22 @@ body {
   background: rgba(255, 255, 255, 0.25);
 }
 
+.navbar-signout-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.navbar-signout-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 /* ─── Page layout ─────────────────────────────────────────────── */
 .page-content {
   max-width: 860px;
