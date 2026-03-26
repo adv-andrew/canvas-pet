@@ -11,8 +11,8 @@ interface Props {
   onSave: (item: CanvasPlannerItem) => Promise<void>
   onUnsave: (id: number) => Promise<void>
   onRefresh: () => void
-  onLinkGoogle?: () => Promise<void>
-  googleAvatar?: string
+  onConnectApp?: () => void
+  webAccount?: { displayName: string | null; email: string | null }
 }
 
 function groupAssignments(items: TrackedAssignment[]) {
@@ -64,21 +64,9 @@ function GroupSection({ title, items, onSave, onUnsave }: GroupSectionProps) {
   )
 }
 
-export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onLinkGoogle, googleAvatar }: Props) {
+export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onConnectApp, webAccount }: Props) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
-  const [linkState, setLinkState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
 
-  const handleLinkGoogle = async () => {
-    if (!onLinkGoogle || linkState === 'loading') return
-    setLinkState('loading')
-    try {
-      await onLinkGoogle()
-      setLinkState('done')
-    } catch {
-      setLinkState('error')
-      setTimeout(() => setLinkState('idle'), 3000)
-    }
-  }
   const groups = groupAssignments(assignments)
   const hasAssignments = Object.values(groups).some((g) => g.length > 0)
 
@@ -87,24 +75,18 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
       <header className="dashboard-header">
         <h1>Canvas Pet</h1>
         <div className="header-actions">
-          {googleAvatar ? (
-            <img
-              src={googleAvatar}
-              className="google-avatar"
-              title="Google account linked"
-              alt="Google account linked"
-            />
-          ) : onLinkGoogle && linkState !== 'done' ? (
+          {webAccount ? (
+            <span className="web-account-label" title="Connected to Canvas Pet web app">
+              {webAccount.displayName ?? webAccount.email}
+            </span>
+          ) : onConnectApp ? (
             <button
-              className="link-google-btn"
-              onClick={handleLinkGoogle}
-              disabled={linkState === 'loading'}
-              title="Link Google Account for web app access"
+              className="connect-app-btn"
+              onClick={onConnectApp}
+              title="Connect to Canvas Pet web app"
             >
-              {linkState === 'loading' ? '…' : linkState === 'error' ? 'Failed' : 'Link Google'}
+              Connect With App
             </button>
-          ) : linkState === 'done' ? (
-            <span className="link-google-success">Google linked ✓</span>
           ) : null}
           <button className="refresh-btn" onClick={onRefresh} title="Refresh" disabled={loading}>
             ↻

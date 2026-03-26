@@ -7,8 +7,7 @@
   "permissions": [
     "storage",
     "activeTab",
-    "scripting",
-    "identity"
+    "scripting"
   ],
   "host_permissions": [
     "https://*.instructure.com/*",
