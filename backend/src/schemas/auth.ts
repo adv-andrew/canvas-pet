@@ -3,8 +3,8 @@ import { z } from 'zod'
 export const RegisterCanvasUserSchema = z.object({
   canvas_user_id: z.string().min(1),
   institution_url: z.string().url(),
-  email: z.string().email().optional(),
-  display_name: z.string().optional(),
+  email: z.string().email().nullish(),
+  display_name: z.string().nullish(),
 })
 
 export type RegisterCanvasUserInput = z.infer<typeof RegisterCanvasUserSchema>
@@ -14,8 +14,17 @@ export type RegisterCanvasUserInput = z.infer<typeof RegisterCanvasUserSchema>
 export const ExtensionAuthSchema = z.object({
   canvas_user_id: z.string().min(1),
   institution_url: z.string().url(),
-  display_name: z.string().optional(),
-  email: z.string().email().optional(),
+  display_name: z.string().nullish(),
+  email: z.string().email().nullish(),
 })
 
 export type ExtensionAuthInput = z.infer<typeof ExtensionAuthSchema>
+
+// Used by POST /api/auth/link-canvas — requires JWT of the web app user.
+// Associates the authenticated web user with the given canvas identity.
+export const LinkCanvasSchema = z.object({
+  canvas_user_id: z.string().min(1),
+  institution_url: z.string().url(),
+})
+
+export type LinkCanvasInput = z.infer<typeof LinkCanvasSchema>
