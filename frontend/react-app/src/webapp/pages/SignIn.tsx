@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 
@@ -6,6 +6,20 @@ const WEBAPP_URL = import.meta.env.VITE_WEBAPP_URL as string
 
 export function SignIn() {
   const navigate = useNavigate()
+
+  // Store pending canvas link params in sessionStorage before any OAuth redirect.
+  // The dashboard picks these up after sign-in and calls POST /api/auth/link-canvas.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const cid = params.get('cid')
+    const iu = params.get('iu')
+    if (cid && iu) {
+      sessionStorage.setItem(
+        'pending_canvas_link',
+        JSON.stringify({ canvas_user_id: cid, institution_url: iu }),
+      )
+    }
+  }, [])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)

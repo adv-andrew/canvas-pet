@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient'
-import { apiClientGetMe } from '../../shared/lib/apiClient'
+import { apiClientGetMe, apiClientLinkCanvas } from '../../shared/lib/apiClient'
 import type { MeResponse } from '../../shared/lib/apiClient'
 
 export type { MeResponse }
@@ -13,4 +13,11 @@ async function getToken(): Promise<string> {
 
 export async function apiGetMe(): Promise<MeResponse> {
   return apiClientGetMe(await getToken())
+}
+
+export async function apiLinkCanvas(params: {
+  canvas_user_id: string
+  institution_url: string
+}): Promise<void> {
+  return apiClientLinkCanvas(params, await getToken())
 }
