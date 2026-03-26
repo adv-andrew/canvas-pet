@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { CanvasPlannerItem, TrackedAssignment, CanvasAnnouncement } from '../../shared/types/canvas'
-import { supabaseAuth } from '../lib/supabaseAuthClient'
 import {
-  apiExtensionAuth,
-  apiRegisterCanvasUser,
-  apiFetchSavedIds,
   apiSaveAssignment,
   apiUnsaveAssignment,
-} from '../lib/api'
+  runExtensionAuth,
+} from '../../shared/lib/extensionApi'
 
 interface CanvasDataResult {
   assignments: TrackedAssignment[]
@@ -82,38 +79,13 @@ export function useCanvasData(): CanvasDataResult {
             return
           }
 
-          // Auth + saved IDs flow:
-          // 1. If no session exists, call /api/auth/extension which atomically creates/finds
-          //    the Supabase user AND upserts the canvas_users row, then returns session tokens.
-          // 2. If a session already exists, fire-and-forget a profile refresh (name/email may change).
-          // 3. Fetch saved assignment IDs with the now-guaranteed valid session.
-          const run = async () => {
-            const { data: sessionData } = await supabaseAuth.auth.getSession()
-
-            if (!sessionData.session) {
-              const tokens = await apiExtensionAuth({
-                canvas_user_id: canvasUserId,
-                institution_url: instUrl,
-                display_name: response.displayName ?? undefined,
-                email: response.email ?? undefined,
-              })
-              const { error: setErr } = await supabaseAuth.auth.setSession({
-                access_token: tokens.access_token,
-                refresh_token: tokens.refresh_token,
-              })
-              if (setErr) throw new Error(setErr.message)
-            } else {
-              void apiRegisterCanvasUser({
-                canvas_user_id: canvasUserId,
-                institution_url: instUrl,
-              })
-            }
-
-            const ids = await apiFetchSavedIds(instUrl)
-            setSavedIds(new Set(ids))
-          }
-
-          run()
+          runExtensionAuth({
+            canvasUserId,
+            instUrl,
+            displayName: response.displayName,
+            email: response.email,
+          })
+            .then((ids) => setSavedIds(ids))
             .catch((err: Error) => setError(err.message))
             .finally(() => setLoading(false))
         },
@@ -122,7 +94,6 @@ export function useCanvasData(): CanvasDataResult {
   }, [])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData()
   }, [fetchData])
 
