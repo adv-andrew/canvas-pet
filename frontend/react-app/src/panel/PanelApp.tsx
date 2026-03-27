@@ -26,24 +26,6 @@ export function PanelApp() {
 
   return (
     <div className="cp-panel">
-      {/* Left edge expand/contract button */}
-      <button
-        className="cp-expand-btn"
-        title={mode === 'fullscreen' ? 'Shrink panel' : 'Expand panel'}
-        onClick={() => setAndBroadcast(mode === 'fullscreen' ? 'sidebar' : 'fullscreen')}
-      >
-        {mode === 'fullscreen' ? '▶' : '◀'}
-      </button>
-
-      {/* Top-right minimize button */}
-      <button
-        className="cp-minimize-btn"
-        title="Minimize panel"
-        onClick={() => setAndBroadcast('minimized')}
-      >
-        —
-      </button>
-
       <Dashboard
         assignments={data.assignments}
         announcements={data.announcements}
@@ -56,6 +38,9 @@ export function PanelApp() {
         onConnectAppWithPassword={data.handleConnectAppWithPassword}
         onSubmitManualToken={data.handleSubmitManualToken}
         connectAppState={data.connectAppState}
+        onFullscreen={() => setAndBroadcast(mode === 'fullscreen' ? 'sidebar' : 'fullscreen')}
+        onMinimize={() => setAndBroadcast('minimized')}
+        isFullscreen={mode === 'fullscreen'}
       />
     </div>
   )
