@@ -59,7 +59,7 @@ export async function apiPushCanvasSnapshot(
 /**
  * Shared extension auth flow used by both the popup and panel.
  *
- * 1. If no session exists: calls /api/auth/extension to bootstrap one.
+ * 1. If no session exists: calls /api/auth/canvas-signin to bootstrap one.
  * 2. If a session exists: fire-and-forgets a profile refresh.
  * 3. Returns the user's saved assignment IDs as a Set.
  */

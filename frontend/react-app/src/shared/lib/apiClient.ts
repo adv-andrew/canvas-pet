@@ -13,7 +13,7 @@ export async function apiClientExtensionAuth(params: {
   display_name?: string | null
   email?: string | null
 }): Promise<{ access_token: string; refresh_token: string; expires_in: number }> {
-  const res = await fetch(`${BACKEND_URL}/api/auth/extension`, {
+  const res = await fetch(`${BACKEND_URL}/api/auth/canvas-signin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
@@ -104,7 +104,7 @@ export interface MeResponse {
 }
 
 export async function apiClientGetMe(token: string): Promise<MeResponse> {
-  const res = await fetch(`${BACKEND_URL}/api/auth/me`, {
+  const res = await fetch(`${BACKEND_URL}/api/auth/profile`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) {
