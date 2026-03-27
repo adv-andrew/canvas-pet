@@ -99,6 +99,7 @@ export interface MeResponse {
   web_linked?: boolean
   web_display_name?: string | null
   web_email?: string | null
+  canvas_token_stored?: boolean
 }
 
 export async function apiClientGetMe(token: string): Promise<MeResponse> {
@@ -110,6 +111,21 @@ export async function apiClientGetMe(token: string): Promise<MeResponse> {
     throw new Error(error)
   }
   return res.json() as Promise<MeResponse>
+}
+
+export async function apiClientStoreCanvasToken(
+  canvasToken: string,
+  token: string,
+): Promise<void> {
+  const res = await fetch(`${BACKEND_URL}/api/auth/canvas-token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ canvas_token: canvasToken }),
+  })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
 }
 
 export async function apiClientLinkCanvas(
