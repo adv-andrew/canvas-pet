@@ -1,9 +1,13 @@
 const PANEL_URL = chrome.runtime.getURL('panel.html')
 const NAV_WIDTH = 62 // Canvas global nav column width in px
+const DEFAULT_WIDTH = 760
+const MIN_WIDTH = 280
 
 let iframe: HTMLIFrameElement | null = null
 let container: HTMLDivElement | null = null
 let restoreTab: HTMLButtonElement | null = null
+let panelWidth = DEFAULT_WIDTH
+let lastSavedWidth = DEFAULT_WIDTH
 
 function isDashboard() {
   return ['/', '/dashboard', '/dashboard-sidebar'].some(
@@ -41,6 +45,41 @@ async function fetchCanvasData() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     email: (user as any).primary_email ?? (user as any).email ?? (user as any).login_id ?? null,
   }
+}
+
+// --- Canvas token generation ---
+
+// --- Canvas token generation ---
+// Delegates to the background service worker which uses chrome.scripting.executeScript
+// with world: 'MAIN' to run the fetch inside the page's real JS context.
+// This avoids two problems that affect content scripts directly:
+//   1. Chrome sets Origin: chrome-extension://... on content-script POSTs,
+//      causing Canvas's CSRF check to reject the request with 401.
+//   2. Injected <script> tags are blocked by Canvas's Content-Security-Policy.
+function generateCanvasToken(password?: string): Promise<{ token?: string; blocked?: boolean; error?: string }> {
+  console.log('[CP content] sending GENERATE_CANVAS_TOKEN to background')
+  return new Promise((resolve) => {
+    try {
+      chrome.runtime.sendMessage(
+        { type: 'GENERATE_CANVAS_TOKEN', password },
+        (response: { result: { token?: string; blocked?: boolean; error?: string } }) => {
+          if (chrome.runtime.lastError) {
+            const msg = chrome.runtime.lastError.message ?? 'Background error'
+            console.error('[CP content] runtime.lastError:', msg)
+            const isInvalidated = msg.toLowerCase().includes('invalidated') || msg.toLowerCase().includes('context')
+            resolve({ error: isInvalidated ? 'RELOAD_PAGE' : msg })
+          } else {
+            console.log('[CP content] response from background:', response)
+            resolve(response?.result ?? { error: 'No response from background' })
+          }
+        },
+      )
+    } catch (err) {
+      // chrome.runtime.sendMessage itself throws when context is invalidated
+      console.error('[CP content] sendMessage threw:', err)
+      resolve({ error: 'RELOAD_PAGE' })
+    }
+  })
 }
 
 // --- Mode management ---
@@ -185,6 +224,12 @@ async function init() {
         .catch((err: Error) => {
           iframe?.contentWindow?.postMessage({ type: 'CANVAS_ERROR', error: err.message }, '*')
         })
+    } else if (e.data?.type === 'GENERATE_CANVAS_TOKEN') {
+      console.log('[CP content] GENERATE_CANVAS_TOKEN received from panel iframe')
+      generateCanvasToken(e.data.password as string | undefined).then((result) => {
+        console.log('[CP content] forwarding CANVAS_TOKEN_RESULT to panel:', result)
+        iframe?.contentWindow?.postMessage({ type: 'CANVAS_TOKEN_RESULT', result }, '*')
+      })
     }
   })
 }
