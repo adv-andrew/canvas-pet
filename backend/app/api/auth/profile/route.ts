@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyJwt } from '../../../../src/lib/verifyJwt'
-import { getSupabaseAdmin } from '../../../../src/lib/supabaseAdmin'
+import { verifyJwt } from '../../../lib/verifyJwt'
+import { getSupabaseAdmin } from '../../../lib/supabaseAdmin'
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204 })

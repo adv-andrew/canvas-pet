@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyJwt } from '../../../../src/lib/verifyJwt'
-import { StoreCanvasTokenSchema } from '../../../../src/schemas/auth'
-import { storeCanvasToken } from '../../../../src/services/authService'
+import { verifyJwt } from '../../../lib/verifyJwt'
+import { StoreCanvasTokenSchema } from '../../../schemas/auth'
+import { storeCanvasToken } from '../../../services/authService'
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204 })
