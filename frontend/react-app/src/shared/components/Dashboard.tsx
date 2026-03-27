@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type React from 'react'
-import type { TrackedAssignment, CanvasPlannerItem, CanvasAnnouncement } from '../types/canvas'
-import type { ConnectAppState } from '../../panel/hooks/usePanelData'
+import type { TrackedAssignment, CanvasPlannerItem, CanvasAnnouncement, ConnectAppState } from '../types/canvas'
 import { AssignmentCard } from './AssignmentCard'
 import { AnnouncementCard } from './AnnouncementCard'
 import { AccessTokenPrompt } from './AccessTokenPrompt'

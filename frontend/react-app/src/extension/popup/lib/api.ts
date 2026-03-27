@@ -6,4 +6,4 @@ export {
   apiSaveAssignment,
   apiUnsaveAssignment,
   runExtensionAuth,
-} from '../../shared/lib/extensionApi'
+} from '../../../shared/lib/extensionApi'

@@ -42,6 +42,8 @@ export interface CanvasAnnouncement {
   updated_at: string
 }
 
+export type ConnectAppState = 'idle' | 'connecting' | 'needsLongAccess' | 'reload' | 'error'
+
 export interface SavedAssignment {
   id: string
   canvas_user_id: string
