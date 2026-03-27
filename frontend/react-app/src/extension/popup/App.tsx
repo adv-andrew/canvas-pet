@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabaseAuth } from './lib/supabaseAuthClient'
-import { AccountSettings } from '../shared/components/AccountSettings'
-import { AccessTokenPrompt } from '../shared/components/AccessTokenPrompt'
-import { apiClientGetMe, apiClientStoreCanvasToken } from '../shared/lib/apiClient'
+import { AccountSettings } from '../../shared/components/AccountSettings'
+import { AccessTokenPrompt } from '../../shared/components/AccessTokenPrompt'
+import { apiClientGetMe, apiClientStoreCanvasToken } from '../../shared/lib/apiClient'
 
 export function App() {
   const [showPrompt, setShowPrompt] = useState(false)

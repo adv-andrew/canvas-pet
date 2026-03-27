@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { CanvasPlannerItem, TrackedAssignment, CanvasAnnouncement } from '../../shared/types/canvas'
-import { supabaseExtAuth } from '../../shared/lib/supabaseExtAuth'
+import type { CanvasPlannerItem, TrackedAssignment, CanvasAnnouncement, ConnectAppState } from '../../../shared/types/canvas'
+import { supabaseExtAuth } from '../../../shared/lib/supabaseExtAuth'
 import {
   apiSaveAssignment,
   apiUnsaveAssignment,
   apiStoreCanvasToken,
   apiPushCanvasSnapshot,
   runExtensionAuth,
-} from '../../shared/lib/extensionApi'
-import { apiClientGetMe } from '../../shared/lib/apiClient'
+} from '../../../shared/lib/extensionApi'
+import { apiClientGetMe } from '../../../shared/lib/apiClient'
 
 const WEBAPP_URL = import.meta.env.VITE_WEBAPP_URL as string
 
@@ -21,7 +21,6 @@ interface CanvasDataPayload {
   email: string | null
 }
 
-export type ConnectAppState = 'idle' | 'connecting' | 'needsLongAccess' | 'reload' | 'error'
 
 interface PanelDataResult {
   assignments: TrackedAssignment[]

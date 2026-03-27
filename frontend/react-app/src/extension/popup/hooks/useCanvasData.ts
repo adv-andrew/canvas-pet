@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { CanvasPlannerItem, TrackedAssignment, CanvasAnnouncement } from '../../shared/types/canvas'
+import type { CanvasPlannerItem, TrackedAssignment, CanvasAnnouncement } from '../../../shared/types/canvas'
 import {
   apiSaveAssignment,
   apiUnsaveAssignment,
   runExtensionAuth,
-} from '../../shared/lib/extensionApi'
+} from '../../../shared/lib/extensionApi'
 
 interface CanvasDataResult {
   assignments: TrackedAssignment[]

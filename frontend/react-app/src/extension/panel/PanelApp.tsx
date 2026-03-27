@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Dashboard } from '../shared/components/Dashboard'
+import { Dashboard } from '../../shared/components/Dashboard'
 import { usePanelData } from './hooks/usePanelData'
 
 type PanelMode = 'sidebar' | 'fullscreen' | 'minimized'

@@ -1,4 +1,4 @@
-@import '../popup/popup.css';
+@import '../extension/popup/popup.css';
 
 /* Override popup-specific constraints for full-page web app layout */
 body {

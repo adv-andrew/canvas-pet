@@ -19,8 +19,8 @@ export default defineConfig({
       input: {
         popup: resolve(__dirname, 'popup.html'),
         panel: resolve(__dirname, 'panel.html'),
-        background: resolve(__dirname, 'src/service_worker/background.ts'),
-        content_script: resolve(__dirname, 'src/content_script/content.ts'),
+        background: resolve(__dirname, 'src/extension/service_worker/background.ts'),
+        content_script: resolve(__dirname, 'src/extension/content_script/content.ts'),
         webapp: resolve(__dirname, 'index.html'),
       },
       output: {
