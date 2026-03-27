@@ -20,6 +20,7 @@ async function generateCanvasTokenInPage(password?: string): Promise<{
 
   const params: Record<string, string> = {
     'token[purpose]': 'Canvas Pet',
+    //Max token expiration date is 120 days so set to 1 day early to avoid invalid token
     'token[expires_at]': new Date(Date.now() + 119 * 24 * 60 * 60 * 1000).toISOString(),
   }
   if (password) params['pseudonym[password]'] = password
@@ -44,6 +45,30 @@ async function generateCanvasTokenInPage(password?: string): Promise<{
   return data.token ? { token: data.token } : { error: 'No token in response' }
 }
 
+// Centralises chrome.storage.session access so content scripts on any origin
+// (including HTTP localhost) can read and write the canvas data cache.
+chrome.runtime.onMessage.addListener(
+  (
+    msg: { type: string; data?: unknown },
+    _sender: chrome.runtime.MessageSender,
+    sendResponse: (r: { ok?: boolean; data?: unknown | null }) => void,
+  ) => {
+    if (msg.type === 'GET_CANVAS_CACHE') {
+      chrome.storage.session.get('cp_canvas_cache').then((result) => {
+        sendResponse({ data: result['cp_canvas_cache'] ?? null })
+      })
+      return true
+    }
+    if (msg.type === 'SAVE_CANVAS_CACHE') {
+      chrome.storage.session.set({ cp_canvas_cache: msg.data }).then(() => {
+        sendResponse({ ok: true })
+      })
+      return true
+    }
+    return false
+  },
+)
+
 chrome.runtime.onMessage.addListener(
   (
     msg: { type: string; password?: string },
@@ -52,26 +77,36 @@ chrome.runtime.onMessage.addListener(
   ) => {
     if (msg.type !== 'GENERATE_CANVAS_TOKEN') return false
 
-    const tabId = sender.tab?.id
-    console.log('[CP background] GENERATE_CANVAS_TOKEN received — tabId:', tabId)
-
-    if (!tabId) {
-      console.error('[CP background] No tab ID on sender — cannot inject script')
-      sendResponse({ result: { error: 'No tab ID available' } })
-      return false
+    const resolveTabId = (): Promise<number | undefined> => {
+      if (sender.tab?.id !== undefined) return Promise.resolve(sender.tab.id)
+      // Called from popup — find the active Canvas tab
+      return chrome.tabs.query({ active: true, currentWindow: true }).then(
+        (tabs) => tabs.find((t) => t.url?.includes('.instructure.com'))?.id,
+      )
     }
 
-    chrome.scripting
-      .executeScript({
-        target: { tabId },
-        world: 'MAIN',
-        func: generateCanvasTokenInPage,
-        args: msg.password ? [msg.password] : [],
-      })
-      .then((results) => {
-        const result = results[0]?.result as { token?: string; blocked?: boolean; error?: string } | undefined
-        console.log('[CP background] executeScript result:', result)
-        sendResponse({ result: result ?? { error: 'No result from page' } })
+    resolveTabId()
+      .then((tabId) => {
+        console.log('[CP background] GENERATE_CANVAS_TOKEN received — tabId:', tabId)
+
+        if (!tabId) {
+          console.error('[CP background] No Canvas tab found')
+          sendResponse({ result: { error: 'No Canvas tab open. Navigate to Canvas first.' } })
+          return
+        }
+
+        return chrome.scripting
+          .executeScript({
+            target: { tabId },
+            world: 'MAIN',
+            func: generateCanvasTokenInPage,
+            args: msg.password ? [msg.password] : [],
+          })
+          .then((results) => {
+            const result = results[0]?.result as { token?: string; blocked?: boolean; error?: string } | undefined
+            console.log('[CP background] executeScript result:', result)
+            sendResponse({ result: result ?? { error: 'No result from page' } })
+          })
       })
       .catch((err: Error) => {
         console.error('[CP background] executeScript threw:', err.message)
