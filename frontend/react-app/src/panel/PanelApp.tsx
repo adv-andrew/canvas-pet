@@ -38,6 +38,7 @@ export function PanelApp() {
         onConnectAppWithPassword={data.handleConnectAppWithPassword}
         onSubmitManualToken={data.handleSubmitManualToken}
         connectAppState={data.connectAppState}
+        onDismissLongAccess={data.handleDismissLongAccess}
         onFullscreen={() => setAndBroadcast(mode === 'fullscreen' ? 'sidebar' : 'fullscreen')}
         onMinimize={() => setAndBroadcast('minimized')}
         isFullscreen={mode === 'fullscreen'}

@@ -5,6 +5,7 @@ import {
   apiSaveAssignment,
   apiUnsaveAssignment,
   apiStoreCanvasToken,
+  apiPushCanvasSnapshot,
   runExtensionAuth,
 } from '../../shared/lib/extensionApi'
 import { apiClientGetMe } from '../../shared/lib/apiClient'
@@ -20,7 +21,7 @@ interface CanvasDataPayload {
   email: string | null
 }
 
-export type ConnectAppState = 'idle' | 'connecting' | 'needsPassword' | 'passwordError' | 'blocked' | 'reload' | 'error'
+export type ConnectAppState = 'idle' | 'connecting' | 'needsLongAccess' | 'reload' | 'error'
 
 interface PanelDataResult {
   assignments: TrackedAssignment[]
@@ -35,8 +36,9 @@ interface PanelDataResult {
   saveAssignment: (item: CanvasPlannerItem) => Promise<void>
   unsaveAssignment: (assignmentId: number) => Promise<void>
   handleConnectApp: (() => void) | undefined
-  handleConnectAppWithPassword: ((password: string) => void) | undefined
+  handleConnectAppWithPassword: ((password: string) => Promise<void>) | undefined
   handleSubmitManualToken: ((token: string) => Promise<void>) | undefined
+  handleDismissLongAccess: () => void
 }
 
 export function usePanelData(): PanelDataResult {
@@ -129,7 +131,7 @@ export function usePanelData(): PanelDataResult {
 
   // Requests a Canvas API token from the content script via postMessage,
   // stores it on the backend, then opens the web app. Falls back gracefully
-  // to a blocked state if the institution requires a password confirmation.
+  // to needsLongAccess if the institution requires a password confirmation.
   const handleConnectApp = useCallback(() => {
     if (!userId || !institutionUrl) return
     setConnectAppState('connecting')
@@ -158,8 +160,10 @@ export function usePanelData(): PanelDataResult {
     tokenPromise
       .then(async (result) => {
         if (result.blocked) {
-          // Institution requires password confirmation — prompt the user
-          setConnectAppState('needsPassword')
+          // Auto-push snapshot (non-fatal) then open web app
+          try { await apiPushCanvasSnapshot(rawItems, announcements) } catch { /* non-fatal */ }
+          chrome.tabs.create({ url: webAppUrl })
+          setConnectAppState('needsLongAccess')
           return
         }
         if (result.error === 'RELOAD_PAGE') {
@@ -181,11 +185,11 @@ export function usePanelData(): PanelDataResult {
         chrome.tabs.create({ url: webAppUrl })
       })
       .catch(() => setConnectAppState('error'))
-  }, [userId, institutionUrl])
+  }, [userId, institutionUrl, rawItems, announcements])
 
-  // Called when the user submits their Canvas password in the needsPassword prompt.
+  // Called when the user submits their Canvas password in the needsLongAccess prompt.
   // Password is used for a single request and never stored.
-  const handleConnectAppWithPassword = useCallback((password: string) => {
+  const handleConnectAppWithPassword = useCallback(async (password: string) => {
     if (!userId || !institutionUrl) return
     setConnectAppState('connecting')
 
@@ -208,25 +212,22 @@ export function usePanelData(): PanelDataResult {
 
     const webAppUrl = `${WEBAPP_URL}/sign-in?cid=${encodeURIComponent(userId)}&iu=${encodeURIComponent(institutionUrl)}`
 
-    tokenPromise
-      .then(async (result) => {
-        if (result.blocked || result.error) {
-          setConnectAppState('passwordError')
-          return
-        }
-        if (!result.token) {
-          setConnectAppState('passwordError')
-          return
-        }
-        try {
-          await apiStoreCanvasToken(result.token)
-        } catch {
-          // non-fatal
-        }
-        setConnectAppState('idle')
-        chrome.tabs.create({ url: webAppUrl })
-      })
-      .catch(() => setConnectAppState('passwordError'))
+    try {
+      const result = await tokenPromise
+      if (result.blocked || result.error || !result.token) {
+        setConnectAppState('needsLongAccess')
+        return
+      }
+      try {
+        await apiStoreCanvasToken(result.token)
+      } catch {
+        // non-fatal
+      }
+      setConnectAppState('idle')
+      chrome.tabs.create({ url: webAppUrl })
+    } catch {
+      setConnectAppState('needsLongAccess')
+    }
   }, [userId, institutionUrl])
 
   // Called when the user manually pastes a Canvas access token.
@@ -239,9 +240,11 @@ export function usePanelData(): PanelDataResult {
       const webAppUrl = `${WEBAPP_URL}/sign-in?cid=${encodeURIComponent(userId)}&iu=${encodeURIComponent(institutionUrl)}`
       chrome.tabs.create({ url: webAppUrl })
     } catch {
-      setConnectAppState('passwordError')
+      setConnectAppState('needsLongAccess')
     }
   }, [userId, institutionUrl])
+
+  const handleDismissLongAccess = useCallback(() => setConnectAppState('idle'), [])
 
   const assignments: TrackedAssignment[] = rawItems.map((item) => ({
     ...item,
@@ -264,5 +267,6 @@ export function usePanelData(): PanelDataResult {
     handleConnectApp,
     handleConnectAppWithPassword,
     handleSubmitManualToken,
+    handleDismissLongAccess,
   }
 }
