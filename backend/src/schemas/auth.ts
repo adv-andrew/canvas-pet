@@ -9,7 +9,7 @@ export const RegisterCanvasUserSchema = z.object({
 
 export type RegisterCanvasUserInput = z.infer<typeof RegisterCanvasUserSchema>
 
-// Used by POST /api/auth/extension — no JWT required, this IS the auth step.
+// Used by POST /api/auth/canvas-signin — no JWT required, this IS the auth step.
 // Merges canvas user registration so auth + canvas_users upsert are atomic.
 export const ExtensionAuthSchema = z.object({
   canvas_user_id: z.string().min(1),

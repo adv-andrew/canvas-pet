@@ -6,7 +6,7 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204 })
 }
 
-// GET /api/auth/me — requires Bearer JWT
+// GET /api/auth/profile — requires Bearer JWT
 // Works for both canvas-keyed users and web app users:
 // - Canvas-keyed user: returns canvas info + web link status
 // - Web app user (Google/email): checks if linked to a canvas identity via web_user_id

@@ -6,7 +6,7 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204 })
 }
 
-// POST /api/auth/extension — no JWT required, this IS the auth step.
+// POST /api/auth/canvas-signin — no JWT required, this IS the auth step.
 // Creates or finds the Supabase Auth user for the given Canvas identity,
 // upserts the canvas_users row atomically, and returns session tokens
 // for the extension to store via supabaseAuth.setSession().
