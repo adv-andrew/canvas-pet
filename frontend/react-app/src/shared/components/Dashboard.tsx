@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import type { TrackedAssignment, CanvasPlannerItem, CanvasAnnouncement } from '../types/canvas'
 import type { ConnectAppState } from '../../panel/hooks/usePanelData'
 import { AssignmentCard } from './AssignmentCard'
 import { AnnouncementCard } from './AnnouncementCard'
+import { AccessTokenPrompt } from './AccessTokenPrompt'
 
 interface Props {
   assignments: TrackedAssignment[]
@@ -13,9 +14,10 @@ interface Props {
   onUnsave: (id: number) => Promise<void>
   onRefresh: () => void
   onConnectApp?: () => void
-  onConnectAppWithPassword?: (password: string) => void
+  onConnectAppWithPassword?: (password: string) => Promise<void>
   onSubmitManualToken?: (token: string) => Promise<void>
   connectAppState?: ConnectAppState
+  onDismissLongAccess?: () => void
   onFullscreen?: () => void
   onMinimize?: () => void
   isFullscreen?: boolean
@@ -70,10 +72,8 @@ function GroupSection({ title, items, onSave, onUnsave }: GroupSectionProps) {
   )
 }
 
-export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onFullscreen, onMinimize, isFullscreen }: Props) {
+export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onDismissLongAccess, onFullscreen, onMinimize, isFullscreen }: Props) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
-  const passwordRef = useRef<HTMLInputElement>(null)
-  const manualTokenRef = useRef<HTMLInputElement>(null)
 
   const groups = groupAssignments(assignments)
   const hasAssignments = Object.values(groups).some((g) => g.length > 0)
@@ -87,7 +87,7 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
             <button
               className="connect-app-btn"
               onClick={onConnectApp}
-              disabled={['connecting','reload','needsPassword','passwordError'].includes(connectAppState ?? '')}
+              disabled={['connecting','reload','needsLongAccess'].includes(connectAppState ?? '')}
               title="Open Canvas Pet web app"
             >
               {connectAppState === 'connecting' ? '…' : 'Open Web App'}
@@ -113,65 +113,12 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
         </div>
       </header>
 
-      {connectAppState === 'needsPassword' && (
-        <form
-          className="connect-password-form"
-          onSubmit={(e) => {
-            e.preventDefault()
-            const pw = passwordRef.current?.value ?? ''
-            if (!pw) return
-            if (passwordRef.current) passwordRef.current.value = ''
-            onConnectAppWithPassword?.(pw)
-          }}
-        >
-          <p>
-            <strong>Canvas password required.</strong> Your institution requires password
-            confirmation to generate API tokens. It is used once and never stored.
-          </p>
-          <input
-            ref={passwordRef}
-            type="password"
-            className="password-input"
-            placeholder="Canvas password"
-            autoFocus
-          />
-          <button type="submit" className="connect-app-btn">
-            Confirm
-          </button>
-        </form>
-      )}
-
-      {connectAppState === 'passwordError' && (
-        <form
-          className="connect-password-form"
-          onSubmit={(e) => {
-            e.preventDefault()
-            const tok = manualTokenRef.current?.value?.trim() ?? ''
-            if (!tok) return
-            if (manualTokenRef.current) manualTokenRef.current.value = ''
-            void onSubmitManualToken?.(tok)
-          }}
-        >
-          <p>
-            <strong>Automatic token generation blocked.</strong> Your institution uses SSO
-            and does not allow API-based token creation.
-          </p>
-          <p>
-            To enable live sync, manually create a token in Canvas:
-            <br />
-            <em>Profile → Settings → New Access Token → purpose: "Canvas Pet"</em>
-          </p>
-          <input
-            ref={manualTokenRef}
-            type="password"
-            className="password-input"
-            placeholder="Paste token here"
-            autoFocus
-          />
-          <button type="submit" className="connect-app-btn">
-            Save Token
-          </button>
-        </form>
+      {connectAppState === 'needsLongAccess' && (
+        <AccessTokenPrompt
+          onSubmitPassword={async (pw) => { await onConnectAppWithPassword?.(pw) }}
+          onSubmitToken={async (tok) => { await onSubmitManualToken?.(tok) }}
+          onDismiss={() => onDismissLongAccess?.()}
+        />
       )}
 
       {connectAppState === 'reload' && (
