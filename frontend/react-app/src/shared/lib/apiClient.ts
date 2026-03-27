@@ -1,4 +1,4 @@
-import type { CanvasPlannerItem } from '../types/canvas'
+import type { CanvasPlannerItem, CanvasAnnouncement } from '../types/canvas'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string
 
@@ -100,6 +100,7 @@ export interface MeResponse {
   web_display_name?: string | null
   web_email?: string | null
   canvas_token_stored?: boolean
+  snapshot_available?: boolean
 }
 
 export async function apiClientGetMe(token: string): Promise<MeResponse> {
@@ -141,4 +142,37 @@ export async function apiClientLinkCanvas(
     const { error } = (await res.json()) as { error: string }
     throw new Error(error)
   }
+}
+
+export interface CanvasSnapshotResponse {
+  items: unknown[]
+  announcements: unknown[]
+  created_at?: string
+}
+
+export async function apiClientPushCanvasSnapshot(
+  items: CanvasPlannerItem[],
+  announcements: CanvasAnnouncement[],
+  token: string,
+): Promise<void> {
+  const res = await fetch(`${BACKEND_URL}/api/canvas-snapshot`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ items, announcements }),
+  })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
+}
+
+export async function apiClientGetCanvasSnapshot(token: string): Promise<CanvasSnapshotResponse> {
+  const res = await fetch(`${BACKEND_URL}/api/canvas-snapshot`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
+  return res.json() as Promise<CanvasSnapshotResponse>
 }

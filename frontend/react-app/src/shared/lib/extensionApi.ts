@@ -1,5 +1,5 @@
 import { supabaseExtAuth } from './supabaseExtAuth'
-import type { CanvasPlannerItem } from '../types/canvas'
+import type { CanvasPlannerItem, CanvasAnnouncement } from '../types/canvas'
 import {
   apiClientExtensionAuth,
   apiClientRegisterCanvasUser,
@@ -7,6 +7,7 @@ import {
   apiClientSaveAssignment,
   apiClientUnsaveAssignment,
   apiClientStoreCanvasToken,
+  apiClientPushCanvasSnapshot,
 } from './apiClient'
 
 async function getToken(): Promise<string> {
@@ -46,6 +47,13 @@ export async function apiUnsaveAssignment(assignmentId: number, institutionUrl: 
 
 export async function apiStoreCanvasToken(canvasToken: string): Promise<void> {
   return apiClientStoreCanvasToken(canvasToken, await getToken())
+}
+
+export async function apiPushCanvasSnapshot(
+  items: CanvasPlannerItem[],
+  announcements: CanvasAnnouncement[],
+): Promise<void> {
+  return apiClientPushCanvasSnapshot(items, announcements, await getToken())
 }
 
 /**

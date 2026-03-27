@@ -1,8 +1,9 @@
 import { supabase } from './supabaseClient'
-import { apiClientGetMe, apiClientLinkCanvas } from '../../shared/lib/apiClient'
-import type { MeResponse } from '../../shared/lib/apiClient'
+import { apiClientGetMe, apiClientLinkCanvas, apiClientGetCanvasSnapshot } from '../../shared/lib/apiClient'
+import type { MeResponse, CanvasSnapshotResponse } from '../../shared/lib/apiClient'
 
 export type { MeResponse }
+export type { CanvasSnapshotResponse }
 
 async function getToken(): Promise<string> {
   const { data } = await supabase.auth.getSession()
@@ -20,4 +21,8 @@ export async function apiLinkCanvas(params: {
   institution_url: string
 }): Promise<void> {
   return apiClientLinkCanvas(params, await getToken())
+}
+
+export async function apiGetCanvasSnapshot(): Promise<CanvasSnapshotResponse> {
+  return apiClientGetCanvasSnapshot(await getToken())
 }
