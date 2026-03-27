@@ -59,4 +59,5 @@ coverage/
 *.js.map
 *.d.ts
 
+.claude
 CLAUDE.md
