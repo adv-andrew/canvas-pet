@@ -45,8 +45,15 @@ export function Dashboard() {
     <div className="page-content">
       {me && !me.canvas_linked && (
         <div className="canvas-not-linked-banner">
-          <strong>Account not linked to Canvas.</strong> Download the extension, open Canvas, and
-          press <em>"Connect With App"</em> from the extension popup.
+          <strong>Extension not connected.</strong> Open Canvas in your browser with the
+          Canvas Pet extension installed, then press <em>"Open Web App"</em> from the panel.
+        </div>
+      )}
+
+      {me?.canvas_linked && !me.canvas_token_stored && (
+        <div className="canvas-not-linked-banner">
+          <strong>Live sync not set up.</strong> Open Canvas with the Canvas Pet extension
+          and press <em>"Open Web App"</em> from the panel to enable assignment syncing.
         </div>
       )}
 
@@ -64,7 +71,7 @@ export function Dashboard() {
       <div className="empty-state">
         <p>Full Canvas data sync coming soon.</p>
         <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
-          Use the extension to view live assignments.
+          Use the extension panel to view live assignments.
         </p>
       </div>
     </div>
