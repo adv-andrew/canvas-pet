@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
     const { data: canvasUser } = await getSupabaseAdmin()
       .from('canvas_users')
-      .select('canvas_user_id, institution_url, display_name, email, web_user_id, web_display_name, web_email')
+      .select('canvas_user_id, institution_url, display_name, email, web_user_id, web_display_name, web_email, canvas_token')
       .or(`id.eq.${userId},web_user_id.eq.${userId}`)
       .maybeSingle()
 
@@ -34,6 +34,9 @@ export async function GET(req: NextRequest) {
       web_linked: canvasUser.web_user_id !== null,
       web_display_name: canvasUser.web_display_name ?? null,
       web_email: canvasUser.web_email ?? null,
+      // Whether a Canvas API token has been stored — used by the web app to show
+      // a "connect via extension" prompt when no token is available yet.
+      canvas_token_stored: canvasUser.canvas_token !== null,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'

@@ -24,6 +24,7 @@ create table if not exists canvas_users (
   display_name     text,
   happiness_score  integer     not null default 50 check (happiness_score >= 0 and happiness_score <= 100),
   reward_points    integer     not null default 0  check (reward_points >= 0),
+  canvas_token     text,             -- see v3_add_personal_access_token.sql
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
