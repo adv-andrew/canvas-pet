@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type React from 'react'
 import type { TrackedAssignment, CanvasPlannerItem, CanvasAnnouncement } from '../types/canvas'
 import type { ConnectAppState } from '../../panel/hooks/usePanelData'
 import { AssignmentCard } from './AssignmentCard'
@@ -21,6 +22,8 @@ interface Props {
   onFullscreen?: () => void
   onMinimize?: () => void
   isFullscreen?: boolean
+  hideHeader?: boolean
+  banner?: React.ReactNode
 }
 
 function groupAssignments(items: TrackedAssignment[]) {
@@ -72,7 +75,7 @@ function GroupSection({ title, items, onSave, onUnsave }: GroupSectionProps) {
   )
 }
 
-export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onDismissLongAccess, onFullscreen, onMinimize, isFullscreen }: Props) {
+export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onDismissLongAccess, onFullscreen, onMinimize, isFullscreen, hideHeader, banner }: Props) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
 
   const groups = groupAssignments(assignments)
@@ -80,7 +83,8 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
 
   return (
     <div className="dashboard">
-      <header className="dashboard-header">
+      {banner}
+      {!hideHeader && <header className="dashboard-header">
         <h1>Canvas Pet</h1>
         <div className="header-actions">
           {onConnectApp && (
@@ -111,7 +115,7 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
             ↻
           </button>
         </div>
-      </header>
+      </header>}
 
       {connectAppState === 'needsLongAccess' && (
         <AccessTokenPrompt
