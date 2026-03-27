@@ -52,8 +52,10 @@ export function PanelApp() {
         onSave={data.saveAssignment}
         onUnsave={data.unsaveAssignment}
         onRefresh={data.refetch}
-        onConnectApp={data.webAccount ? undefined : data.handleConnectApp}
-        webAccount={data.webAccount ?? undefined}
+        onConnectApp={data.handleConnectApp}
+        onConnectAppWithPassword={data.handleConnectAppWithPassword}
+        onSubmitManualToken={data.handleSubmitManualToken}
+        connectAppState={data.connectAppState}
       />
     </div>
   )

@@ -4,6 +4,7 @@ import { supabaseExtAuth } from '../../shared/lib/supabaseExtAuth'
 import {
   apiSaveAssignment,
   apiUnsaveAssignment,
+  apiStoreCanvasToken,
   runExtensionAuth,
 } from '../../shared/lib/extensionApi'
 import { apiClientGetMe } from '../../shared/lib/apiClient'
@@ -19,6 +20,8 @@ interface CanvasDataPayload {
   email: string | null
 }
 
+export type ConnectAppState = 'idle' | 'connecting' | 'needsPassword' | 'passwordError' | 'blocked' | 'reload' | 'error'
+
 interface PanelDataResult {
   assignments: TrackedAssignment[]
   announcements: CanvasAnnouncement[]
@@ -27,10 +30,13 @@ interface PanelDataResult {
   userId: string | null
   institutionUrl: string | null
   webAccount: { displayName: string | null; email: string | null } | null
+  connectAppState: ConnectAppState
   refetch: () => void
   saveAssignment: (item: CanvasPlannerItem) => Promise<void>
   unsaveAssignment: (assignmentId: number) => Promise<void>
   handleConnectApp: (() => void) | undefined
+  handleConnectAppWithPassword: ((password: string) => void) | undefined
+  handleSubmitManualToken: ((token: string) => Promise<void>) | undefined
 }
 
 export function usePanelData(): PanelDataResult {
@@ -42,6 +48,7 @@ export function usePanelData(): PanelDataResult {
   const [userId, setUserId] = useState<string | null>(null)
   const [institutionUrl, setInstitutionUrl] = useState<string | null>(null)
   const [webAccount, setWebAccount] = useState<{ displayName: string | null; email: string | null } | null>(null)
+  const [connectAppState, setConnectAppState] = useState<ConnectAppState>('idle')
 
   const handleCanvasData = useCallback(async (payload: CanvasDataPayload) => {
     setRawItems(payload.items)
@@ -120,12 +127,121 @@ export function usePanelData(): PanelDataResult {
     [institutionUrl],
   )
 
-  const handleConnectApp = userId && institutionUrl
-    ? () => {
-        const url = `${WEBAPP_URL}/sign-in?cid=${encodeURIComponent(userId)}&iu=${encodeURIComponent(institutionUrl)}`
-        chrome.tabs.create({ url })
-      }
-    : undefined
+  // Requests a Canvas API token from the content script via postMessage,
+  // stores it on the backend, then opens the web app. Falls back gracefully
+  // to a blocked state if the institution requires a password confirmation.
+  const handleConnectApp = useCallback(() => {
+    if (!userId || !institutionUrl) return
+    setConnectAppState('connecting')
+
+    const tokenPromise = new Promise<{ token?: string; blocked?: boolean; error?: string }>(
+      (resolve) => {
+        const timeoutId = setTimeout(() => {
+          window.removeEventListener('message', handler)
+          resolve({ error: 'Request timed out' })
+        }, 15000)
+        function handler(e: MessageEvent) {
+          if (e.source !== window.parent || e.data?.type !== 'CANVAS_TOKEN_RESULT') return
+          clearTimeout(timeoutId)
+          window.removeEventListener('message', handler)
+          console.log('[CP panel] CANVAS_TOKEN_RESULT received:', e.data.result)
+          resolve(e.data.result as { token?: string; blocked?: boolean; error?: string })
+        }
+        window.addEventListener('message', handler)
+        console.log('[CP panel] sending GENERATE_CANVAS_TOKEN to content script')
+        window.parent.postMessage({ type: 'GENERATE_CANVAS_TOKEN' }, '*')
+      },
+    )
+
+    const webAppUrl = `${WEBAPP_URL}/sign-in?cid=${encodeURIComponent(userId)}&iu=${encodeURIComponent(institutionUrl)}`
+
+    tokenPromise
+      .then(async (result) => {
+        if (result.blocked) {
+          // Institution requires password confirmation — prompt the user
+          setConnectAppState('needsPassword')
+          return
+        }
+        if (result.error === 'RELOAD_PAGE') {
+          setConnectAppState('reload')
+          return
+        }
+        if (result.error || !result.token) {
+          setConnectAppState('error')
+          return
+        }
+        // Token storage failure is non-fatal — open the web app anyway.
+        // The web app will show a "sync not set up" prompt if the token is missing.
+        try {
+          await apiStoreCanvasToken(result.token)
+        } catch {
+          // swallow — likely the migration hasn't been applied yet
+        }
+        setConnectAppState('idle')
+        chrome.tabs.create({ url: webAppUrl })
+      })
+      .catch(() => setConnectAppState('error'))
+  }, [userId, institutionUrl])
+
+  // Called when the user submits their Canvas password in the needsPassword prompt.
+  // Password is used for a single request and never stored.
+  const handleConnectAppWithPassword = useCallback((password: string) => {
+    if (!userId || !institutionUrl) return
+    setConnectAppState('connecting')
+
+    const tokenPromise = new Promise<{ token?: string; blocked?: boolean; error?: string }>(
+      (resolve) => {
+        const timeoutId = setTimeout(() => {
+          window.removeEventListener('message', handler)
+          resolve({ error: 'Request timed out' })
+        }, 15000)
+        function handler(e: MessageEvent) {
+          if (e.source !== window.parent || e.data?.type !== 'CANVAS_TOKEN_RESULT') return
+          clearTimeout(timeoutId)
+          window.removeEventListener('message', handler)
+          resolve(e.data.result as { token?: string; blocked?: boolean; error?: string })
+        }
+        window.addEventListener('message', handler)
+        window.parent.postMessage({ type: 'GENERATE_CANVAS_TOKEN', password }, '*')
+      },
+    )
+
+    const webAppUrl = `${WEBAPP_URL}/sign-in?cid=${encodeURIComponent(userId)}&iu=${encodeURIComponent(institutionUrl)}`
+
+    tokenPromise
+      .then(async (result) => {
+        if (result.blocked || result.error) {
+          setConnectAppState('passwordError')
+          return
+        }
+        if (!result.token) {
+          setConnectAppState('passwordError')
+          return
+        }
+        try {
+          await apiStoreCanvasToken(result.token)
+        } catch {
+          // non-fatal
+        }
+        setConnectAppState('idle')
+        chrome.tabs.create({ url: webAppUrl })
+      })
+      .catch(() => setConnectAppState('passwordError'))
+  }, [userId, institutionUrl])
+
+  // Called when the user manually pastes a Canvas access token.
+  const handleSubmitManualToken = useCallback(async (token: string) => {
+    if (!userId || !institutionUrl) return
+    setConnectAppState('connecting')
+    try {
+      await apiStoreCanvasToken(token)
+      setConnectAppState('idle')
+      const webAppUrl = `${WEBAPP_URL}/sign-in?cid=${encodeURIComponent(userId)}&iu=${encodeURIComponent(institutionUrl)}`
+      chrome.tabs.create({ url: webAppUrl })
+    } catch {
+      setConnectAppState('passwordError')
+    }
+  }, [userId, institutionUrl])
 
   const assignments: TrackedAssignment[] = rawItems.map((item) => ({
     ...item,
@@ -141,9 +257,12 @@ export function usePanelData(): PanelDataResult {
     userId,
     institutionUrl,
     webAccount,
+    connectAppState,
     refetch,
     saveAssignment,
     unsaveAssignment,
     handleConnectApp,
+    handleConnectAppWithPassword,
+    handleSubmitManualToken,
   }
 }
