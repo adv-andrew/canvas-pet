@@ -12,7 +12,8 @@
 
   "host_permissions": [
     "https://*.instructure.com/*",
-    "http://localhost:3000/*"
+    "http://localhost/*",
+    "http://localhost:*/*"
   ],
 
   "background": {
@@ -27,7 +28,7 @@
 
   "content_scripts": [
     {
-      "matches": ["https://*.instructure.com/*"],
+      "matches": ["https://*.instructure.com/*", "http://localhost/*", "http://localhost:*/*"],
       "js": ["content_script.js"],
       "run_at": "document_idle"
     }

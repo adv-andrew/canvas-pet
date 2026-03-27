@@ -11,6 +11,8 @@ let restoreTab: HTMLButtonElement | null = null
 let panelWidth = DEFAULT_WIDTH
 let lastSavedWidth = DEFAULT_WIDTH
 
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+
 // --- Canvas data fetching (same origin) ---
 async function fetchCanvasData() {
   const [items, user, stream] = await Promise.all([
@@ -31,7 +33,7 @@ async function fetchCanvasData() {
   ])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const announcements = (stream as any[]).filter((a) => a.type === 'Announcement')
-  return {
+  const data = {
     items,
     announcements,
     userId: String((user as { id: number }).id),
@@ -41,6 +43,24 @@ async function fetchCanvasData() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     email: (user as any).primary_email ?? (user as any).email ?? (user as any).login_id ?? null,
   }
+  // Route the write through the background service worker — direct chrome.storage.session
+  // access is unreliable from content scripts and silently fails on some origins.
+  chrome.runtime.sendMessage({ type: 'SAVE_CANVAS_CACHE', data })
+  return data
+}
+
+// chrome.storage.session is blocked on HTTP origins (e.g. localhost dev server).
+// Route the read through the background service worker which always has access.
+function getCanvasDataFromCache(): Promise<Awaited<ReturnType<typeof fetchCanvasData>> | null> {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: 'GET_CANVAS_CACHE' }, (response: { data: unknown } | undefined) => {
+      if (chrome.runtime.lastError) {
+        resolve(null)
+      } else {
+        resolve((response?.data as Awaited<ReturnType<typeof fetchCanvasData>>) ?? null)
+      }
+    })
+  })
 }
 
 // --- Canvas token generation ---
@@ -290,4 +310,27 @@ async function init() {
   })
 }
 
-void init()
+// On localhost: skip panel injection, act as a silent data bridge only.
+// Reads cached Canvas data from chrome.storage.session and posts it to the
+// page via window.postMessage so the webapp can consume it natively.
+async function initBridge() {
+  const data = await getCanvasDataFromCache()
+  if (data) {
+    window.postMessage({ type: 'CP_CANVAS_DATA', payload: data }, '*')
+  }
+  // Also respond to explicit requests from the webapp (handles the race where
+  // the webapp's useEffect registered its listener before this function ran)
+  window.addEventListener('message', (e) => {
+    if (e.origin !== window.location.origin) return
+    if (e.data?.type !== 'CP_REQUEST_DATA') return
+    getCanvasDataFromCache().then((cached) => {
+      if (cached) window.postMessage({ type: 'CP_CANVAS_DATA', payload: cached }, '*')
+    })
+  })
+}
+
+if (isLocalhost) {
+  void initBridge()
+} else {
+  void init()
+}
