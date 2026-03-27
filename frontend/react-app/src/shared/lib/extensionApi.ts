@@ -6,6 +6,7 @@ import {
   apiClientFetchSavedIds,
   apiClientSaveAssignment,
   apiClientUnsaveAssignment,
+  apiClientStoreCanvasToken,
 } from './apiClient'
 
 async function getToken(): Promise<string> {
@@ -43,6 +44,10 @@ export async function apiUnsaveAssignment(assignmentId: number, institutionUrl: 
   return apiClientUnsaveAssignment(assignmentId, institutionUrl, await getToken())
 }
 
+export async function apiStoreCanvasToken(canvasToken: string): Promise<void> {
+  return apiClientStoreCanvasToken(canvasToken, await getToken())
+}
+
 /**
  * Shared extension auth flow used by both the popup and panel.
  *
@@ -58,24 +63,38 @@ export async function runExtensionAuth(params: {
 }): Promise<Set<number>> {
   const { data: sessionData } = await supabaseExtAuth.auth.getSession()
 
-  if (!sessionData.session) {
-    const tokens = await apiClientExtensionAuth({
-      canvas_user_id: params.canvasUserId,
-      institution_url: params.instUrl,
-      display_name: params.displayName ?? undefined,
-      email: params.email ?? undefined,
-    })
-    const { error: setErr } = await supabaseExtAuth.auth.setSession({
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-    })
-    if (setErr) throw new Error(setErr.message)
-  } else {
-    void apiClientRegisterCanvasUser(
-      { canvas_user_id: params.canvasUserId, institution_url: params.instUrl },
-      sessionData.session.access_token,
-    )
+  if (sessionData.session) {
+    // The popup and panel run in separate JS contexts — signing out from the popup
+    // clears chrome.storage but leaves the panel's in-memory session stale.
+    // Refreshing the session validates it server-side and gets a fresh token.
+    const { data: refreshed, error: refreshErr } = await supabaseExtAuth.auth.refreshSession()
+
+    if (!refreshErr && refreshed.session) {
+      // Session still valid — fire-and-forget profile refresh and return early
+      void apiClientRegisterCanvasUser(
+        { canvas_user_id: params.canvasUserId, institution_url: params.instUrl },
+        refreshed.session.access_token,
+      )
+      const ids = await apiClientFetchSavedIds(params.instUrl, refreshed.session.access_token)
+      return new Set(ids)
+    }
+
+    // Session was invalidated (e.g., signed out from popup) — clear local state
+    await supabaseExtAuth.auth.signOut({ scope: 'local' })
   }
+
+  // No session or session was just cleared — bootstrap via Canvas identity
+  const tokens = await apiClientExtensionAuth({
+    canvas_user_id: params.canvasUserId,
+    institution_url: params.instUrl,
+    display_name: params.displayName ?? undefined,
+    email: params.email ?? undefined,
+  })
+  const { error: setErr } = await supabaseExtAuth.auth.setSession({
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+  })
+  if (setErr) throw new Error(setErr.message)
 
   const token = await getToken()
   const ids = await apiClientFetchSavedIds(params.instUrl, token)
