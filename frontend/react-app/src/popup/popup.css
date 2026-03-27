@@ -129,6 +129,83 @@ body {
   margin-bottom: 2px;
 }
 
+.access-token-prompt {
+  margin: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.access-token-prompt p {
+  margin: 0;
+}
+
+.access-token-prompt strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.access-token-options {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.access-token-option-btn {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #d97706;
+  border-radius: 4px;
+  background: white;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.access-token-option-btn:hover {
+  background: #fef3c7;
+}
+
+.access-token-dismiss {
+  background: none;
+  border: none;
+  color: #92400e;
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  text-align: left;
+}
+
+.access-token-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.access-token-back {
+  background: none;
+  border: none;
+  color: #92400e;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.access-token-error {
+  color: #721c24;
+  font-size: 11px;
+}
+
 .password-input {
   width: 100%;
   padding: 5px 8px;
