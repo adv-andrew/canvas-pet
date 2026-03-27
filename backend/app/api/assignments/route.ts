@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyJwt } from '../../../src/lib/verifyJwt'
-import { getCanvasUserIdForAuthUser } from '../../../src/services/authService'
-import { fetchSavedAssignments, saveAssignment } from '../../../src/services/assignmentService'
-import { SaveAssignmentSchema } from '../../../src/schemas/assignments'
+import { verifyJwt } from '../../lib/verifyJwt'
+import { getCanvasUserIdForAuthUser } from '../../services/authService'
+import { fetchSavedAssignments, saveAssignment } from '../../services/assignmentService'
+import { SaveAssignmentSchema } from '../../schemas/assignments'
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204 })

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ExtensionAuthSchema } from '../../../../src/schemas/auth'
-import { signInExtensionUser } from '../../../../src/services/authService'
+import { ExtensionAuthSchema } from '../../../schemas/auth'
+import { signInExtensionUser } from '../../../services/authService'
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204 })

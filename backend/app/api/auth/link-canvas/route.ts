@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyJwt } from '../../../../src/lib/verifyJwt'
-import { LinkCanvasSchema } from '../../../../src/schemas/auth'
-import { linkCanvasUser } from '../../../../src/services/authService'
-import { getSupabaseAdmin } from '../../../../src/lib/supabaseAdmin'
+import { verifyJwt } from '../../../lib/verifyJwt'
+import { LinkCanvasSchema } from '../../../schemas/auth'
+import { linkCanvasUser } from '../../../services/authService'
+import { getSupabaseAdmin } from '../../../lib/supabaseAdmin'
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204 })

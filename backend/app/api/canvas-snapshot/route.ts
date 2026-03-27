@@ -33,8 +33,8 @@
 
 // import { NextRequest, NextResponse } from 'next/server'
 // import { z } from 'zod'
-// import { verifyJwt } from '../../../src/lib/verifyJwt'
-// import { getCanvasUserIdForAuthUser } from '../../../src/services/authService'
+// import { verifyJwt } from '../../lib/verifyJwt'
+// import { getCanvasUserIdForAuthUser } from '../../services/authService'
 //
 // const store = new Map<string, { items: unknown[]; announcements: unknown[]; exp: number }>()
 //
