@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { TrackedAssignment, CanvasPlannerItem, CanvasAnnouncement } from '../types/canvas'
+import type { ConnectAppState } from '../../panel/hooks/usePanelData'
 import { AssignmentCard } from './AssignmentCard'
 import { AnnouncementCard } from './AnnouncementCard'
 
@@ -12,7 +13,9 @@ interface Props {
   onUnsave: (id: number) => Promise<void>
   onRefresh: () => void
   onConnectApp?: () => void
-  webAccount?: { displayName: string | null; email: string | null }
+  onConnectAppWithPassword?: (password: string) => void
+  onSubmitManualToken?: (token: string) => Promise<void>
+  connectAppState?: ConnectAppState
 }
 
 function groupAssignments(items: TrackedAssignment[]) {
@@ -64,8 +67,10 @@ function GroupSection({ title, items, onSave, onUnsave }: GroupSectionProps) {
   )
 }
 
-export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onConnectApp, webAccount }: Props) {
+export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState }: Props) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
+  const passwordRef = useRef<HTMLInputElement>(null)
+  const manualTokenRef = useRef<HTMLInputElement>(null)
 
   const groups = groupAssignments(assignments)
   const hasAssignments = Object.values(groups).some((g) => g.length > 0)
@@ -75,24 +80,94 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
       <header className="dashboard-header">
         <h1>Canvas Pet</h1>
         <div className="header-actions">
-          {webAccount ? (
-            <span className="web-account-label" title="Connected to Canvas Pet web app">
-              {webAccount.displayName ?? webAccount.email}
-            </span>
-          ) : onConnectApp ? (
+          {onConnectApp && (
             <button
               className="connect-app-btn"
               onClick={onConnectApp}
-              title="Connect to Canvas Pet web app"
+              disabled={['connecting','reload','needsPassword','passwordError'].includes(connectAppState ?? '')}
+              title="Open Canvas Pet web app"
             >
-              Connect With App
+              {connectAppState === 'connecting' ? '…' : 'Open Web App'}
             </button>
-          ) : null}
+          )}
           <button className="refresh-btn" onClick={onRefresh} title="Refresh" disabled={loading}>
             ↻
           </button>
         </div>
       </header>
+
+      {connectAppState === 'needsPassword' && (
+        <form
+          className="connect-password-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            const pw = passwordRef.current?.value ?? ''
+            if (!pw) return
+            if (passwordRef.current) passwordRef.current.value = ''
+            onConnectAppWithPassword?.(pw)
+          }}
+        >
+          <p>
+            <strong>Canvas password required.</strong> Your institution requires password
+            confirmation to generate API tokens. It is used once and never stored.
+          </p>
+          <input
+            ref={passwordRef}
+            type="password"
+            className="password-input"
+            placeholder="Canvas password"
+            autoFocus
+          />
+          <button type="submit" className="connect-app-btn">
+            Confirm
+          </button>
+        </form>
+      )}
+
+      {connectAppState === 'passwordError' && (
+        <form
+          className="connect-password-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            const tok = manualTokenRef.current?.value?.trim() ?? ''
+            if (!tok) return
+            if (manualTokenRef.current) manualTokenRef.current.value = ''
+            void onSubmitManualToken?.(tok)
+          }}
+        >
+          <p>
+            <strong>Automatic token generation blocked.</strong> Your institution uses SSO
+            and does not allow API-based token creation.
+          </p>
+          <p>
+            To enable live sync, manually create a token in Canvas:
+            <br />
+            <em>Profile → Settings → New Access Token → purpose: "Canvas Pet"</em>
+          </p>
+          <input
+            ref={manualTokenRef}
+            type="password"
+            className="password-input"
+            placeholder="Paste token here"
+            autoFocus
+          />
+          <button type="submit" className="connect-app-btn">
+            Save Token
+          </button>
+        </form>
+      )}
+
+      {connectAppState === 'reload' && (
+        <div className="connect-error-banner">
+          <strong>Extension reconnected.</strong> Please reload this Canvas page, then try again.
+        </div>
+      )}
+
+      {connectAppState === 'error' && (
+        <div className="connect-error-banner">
+          Failed to connect. Please try again.
+        </div>
+      )}
 
       <div className="tab-bar">
         <button

@@ -67,8 +67,80 @@ body {
   white-space: nowrap;
 }
 
-.connect-app-btn:hover {
+.connect-app-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.connect-app-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.connect-blocked-banner,
+.connect-error-banner {
+  margin: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.connect-blocked-banner {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+}
+
+.connect-blocked-banner strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.connect-blocked-banner p {
+  margin: 0;
+}
+
+.connect-error-banner {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.connect-password-form {
+  margin: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.connect-password-form p {
+  margin: 0;
+}
+
+.connect-password-form strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.password-input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.password-error-msg {
+  color: #721c24;
+  font-size: 11px;
 }
 
 .web-account-label {
