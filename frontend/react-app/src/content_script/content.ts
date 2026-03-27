@@ -1,19 +1,15 @@
 const PANEL_URL = chrome.runtime.getURL('panel.html')
 const NAV_WIDTH = 62 // Canvas global nav column width in px
 const DEFAULT_WIDTH = 760
-const MIN_WIDTH = 280
+const MIN_WIDTH = 160
+const STORAGE_MODE_KEY = 'cp_mode'
+const STORAGE_WIDTH_KEY = 'cp_width'
 
 let iframe: HTMLIFrameElement | null = null
 let container: HTMLDivElement | null = null
 let restoreTab: HTMLButtonElement | null = null
 let panelWidth = DEFAULT_WIDTH
 let lastSavedWidth = DEFAULT_WIDTH
-
-function isDashboard() {
-  return ['/', '/dashboard', '/dashboard-sidebar'].some(
-    (p) => window.location.pathname === p || window.location.pathname.startsWith(p + '#'),
-  )
-}
 
 // --- Canvas data fetching (same origin) ---
 async function fetchCanvasData() {
@@ -82,6 +78,29 @@ function generateCanvasToken(password?: string): Promise<{ token?: string; block
   })
 }
 
+// --- Canvas To Do hiding ---
+
+function hideTodoElements() {
+  ;['#right-side-wrapper', '.right-side', '#todo-list', '.todo-list-header'].forEach((sel) => {
+    document.querySelectorAll<HTMLElement>(sel).forEach((el) => {
+      el.style.display = 'none'
+    })
+  })
+}
+
+// --- Body margin (shifts Canvas content left to make room for panel) ---
+
+function applyBodyMargin(width: number) {
+  const wrapper = document.querySelector<HTMLElement>('#wrapper') ?? document.body
+  wrapper.style.marginRight = `${width}px`
+  wrapper.style.transition = 'margin-right 0.15s'
+}
+
+function clearBodyMargin() {
+  const wrapper = document.querySelector<HTMLElement>('#wrapper') ?? document.body
+  wrapper.style.marginRight = ''
+}
+
 // --- Mode management ---
 
 /** Applies DOM styles for the given mode. Does not notify the iframe. */
@@ -95,11 +114,12 @@ function applyModeStyles(mode: 'sidebar' | 'fullscreen' | 'minimized') {
       top: '0',
       right: '0',
       left: 'auto',
-      width: '380px',
+      width: `${panelWidth}px`,
       height: '100vh',
       zIndex: '9999',
     })
     restoreTab.style.display = 'none'
+    applyBodyMargin(panelWidth)
   } else if (mode === 'fullscreen') {
     Object.assign(container.style, {
       display: 'block',
@@ -112,9 +132,11 @@ function applyModeStyles(mode: 'sidebar' | 'fullscreen' | 'minimized') {
       zIndex: '9999',
     })
     restoreTab.style.display = 'none'
+    clearBodyMargin()
   } else {
     container.style.display = 'none'
     restoreTab.style.display = 'flex'
+    clearBodyMargin()
   }
 }
 
@@ -123,29 +145,16 @@ function applyModeStyles(mode: 'sidebar' | 'fullscreen' | 'minimized') {
  * Applies DOM styles AND notifies the iframe so it can update its button state.
  */
 function applyMode(mode: 'sidebar' | 'fullscreen' | 'minimized') {
+  if (mode === 'fullscreen') {
+    lastSavedWidth = panelWidth
+  } else if (mode === 'sidebar') {
+    panelWidth = lastSavedWidth
+  }
   applyModeStyles(mode)
+  sessionStorage.setItem(STORAGE_MODE_KEY, mode)
   if (mode !== 'minimized') {
     iframe?.contentWindow?.postMessage({ type: 'SET_MODE', mode }, '*')
   }
-}
-
-function waitForElement(selector: string, timeout = 5000): Promise<Element | null> {
-  return new Promise((resolve) => {
-    const el = document.querySelector(selector)
-    if (el) return resolve(el)
-    const observer = new MutationObserver(() => {
-      const found = document.querySelector(selector)
-      if (found) {
-        observer.disconnect()
-        resolve(found)
-      }
-    })
-    observer.observe(document.body, { childList: true, subtree: true })
-    setTimeout(() => {
-      observer.disconnect()
-      resolve(null)
-    }, timeout)
-  })
 }
 
 // --- Init ---
@@ -153,13 +162,52 @@ async function init() {
   // Create container + iframe
   container = document.createElement('div')
   container.id = 'cp-container'
-  container.style.cssText = 'box-sizing:border-box;'
+  container.style.cssText = 'box-sizing:border-box;position:relative;'
 
   iframe = document.createElement('iframe')
   iframe.src = PANEL_URL
   iframe.id = 'cp-frame'
   iframe.style.cssText = 'width:100%;height:100%;border:none;'
   container.appendChild(iframe)
+
+  // Drag handle on the left edge
+  const dragHandle = document.createElement('div')
+  dragHandle.id = 'cp-drag'
+  dragHandle.style.cssText = [
+    'position:absolute',
+    'left:0',
+    'top:0',
+    'width:6px',
+    'height:100%',
+    'cursor:ew-resize',
+    'z-index:10001',
+    'background:transparent',
+  ].join(';')
+  container.appendChild(dragHandle)
+
+  dragHandle.addEventListener('mousedown', (e) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startWidth = panelWidth
+
+    // Disable pointer events on iframe so mouse events aren't captured by it during drag
+    if (iframe) iframe.style.pointerEvents = 'none'
+
+    function onMouseMove(ev: MouseEvent) {
+      panelWidth = Math.max(MIN_WIDTH, startWidth + (startX - ev.clientX))
+      container!.style.width = `${panelWidth}px`
+      applyBodyMargin(panelWidth)
+    }
+    function onMouseUp() {
+      if (iframe) iframe.style.pointerEvents = ''
+      lastSavedWidth = panelWidth
+      sessionStorage.setItem(STORAGE_WIDTH_KEY, String(panelWidth))
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    }
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+  })
 
   // Create restore tab (visible only when minimized)
   restoreTab = document.createElement('button')
@@ -188,15 +236,19 @@ async function init() {
   restoreTab.onclick = () => applyMode('sidebar')
   document.body.appendChild(restoreTab)
 
-  // On dashboard: hide Canvas's tasks column so our panel takes its place visually
-  if (isDashboard()) {
-    void waitForElement('#right-side-wrapper, .right-side').then((el) => {
-      if (el) (el as HTMLElement).style.display = 'none'
-    })
-  }
+  // Continuously hide Canvas's To Do column on any page (handles SPA re-renders)
+  hideTodoElements()
+  const todoObserver = new MutationObserver(hideTodoElements)
+  todoObserver.observe(document.body, { childList: true, subtree: true })
 
-  // Start in sidebar mode
-  applyMode('sidebar')
+  // Restore saved state (persists across Canvas page navigations within the same tab)
+  const savedWidth = parseInt(sessionStorage.getItem(STORAGE_WIDTH_KEY) ?? '', 10)
+  if (!isNaN(savedWidth) && savedWidth >= MIN_WIDTH) {
+    panelWidth = savedWidth
+    lastSavedWidth = savedWidth
+  }
+  const savedMode = (sessionStorage.getItem(STORAGE_MODE_KEY) ?? 'sidebar') as 'sidebar' | 'fullscreen' | 'minimized'
+  applyModeStyles(savedMode)
   document.body.appendChild(container)
 
   // Send Canvas data once iframe has loaded
@@ -214,8 +266,12 @@ async function init() {
   window.addEventListener('message', (e) => {
     if (e.source !== iframe?.contentWindow) return
     if (e.data?.type === 'SET_MODE') {
+      const newMode = e.data.mode as 'sidebar' | 'fullscreen' | 'minimized'
+      if (newMode === 'fullscreen') lastSavedWidth = panelWidth
+      else if (newMode === 'sidebar') panelWidth = lastSavedWidth
       // iframe already updated its own state — just apply DOM styles without notifying it back
-      applyModeStyles(e.data.mode as 'sidebar' | 'fullscreen' | 'minimized')
+      applyModeStyles(newMode)
+      sessionStorage.setItem(STORAGE_MODE_KEY, newMode)
     } else if (e.data?.type === 'REFETCH') {
       fetchCanvasData()
         .then((data) => {

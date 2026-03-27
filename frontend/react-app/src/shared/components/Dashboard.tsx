@@ -16,6 +16,9 @@ interface Props {
   onConnectAppWithPassword?: (password: string) => void
   onSubmitManualToken?: (token: string) => Promise<void>
   connectAppState?: ConnectAppState
+  onFullscreen?: () => void
+  onMinimize?: () => void
+  isFullscreen?: boolean
 }
 
 function groupAssignments(items: TrackedAssignment[]) {
@@ -67,7 +70,7 @@ function GroupSection({ title, items, onSave, onUnsave }: GroupSectionProps) {
   )
 }
 
-export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState }: Props) {
+export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onFullscreen, onMinimize, isFullscreen }: Props) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
   const passwordRef = useRef<HTMLInputElement>(null)
   const manualTokenRef = useRef<HTMLInputElement>(null)
@@ -88,6 +91,20 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
               title="Open Canvas Pet web app"
             >
               {connectAppState === 'connecting' ? '…' : 'Open Web App'}
+            </button>
+          )}
+          {onFullscreen && (
+            <button className="header-icon-btn" onClick={onFullscreen} title={isFullscreen ? 'Restore' : 'Fullscreen'}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M1 4V1h3M10 1h3v3M13 10v3h-3M4 13H1v-3"/>
+              </svg>
+            </button>
+          )}
+          {onMinimize && (
+            <button className="header-icon-btn" onClick={onMinimize} title="Minimize">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <line x1="2" y1="7" x2="12" y2="7"/>
+              </svg>
             </button>
           )}
           <button className="refresh-btn" onClick={onRefresh} title="Refresh" disabled={loading}>
