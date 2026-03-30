@@ -1,0 +1,16 @@
+@import '../popup/popup.css';
+
+/* Override the fixed 400px popup width — panel fills its iframe */
+body {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.dashboard {
+  min-height: 100vh;
+}
+
+/* Panel wrapper */
+.cp-panel {
+  position: relative;
+}

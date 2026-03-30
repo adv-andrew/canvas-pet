@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Canvas Pet",
+  "version": "1.0.0",
+  "description": "The Canvas Pet companion is a Chrome extension that helps students better manage their workload throughout the week by organizing assignments and rewarding early completion. Stay on top of your assignments to keep your pet happy and unlock special rewards!",
+
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+
+  "host_permissions": [
+    "https://*.instructure.com/*",
+    "http://localhost/*",
+    "http://localhost:*/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Canvas Pet"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://*.instructure.com/*", "http://localhost/*", "http://localhost:*/*"],
+      "js": ["content_script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": ["panel.html"],
+      "matches": ["https://*.instructure.com/*"]
+    }
+  ],
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
