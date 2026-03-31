@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Canvas Pet. This document provide
 
 By participating in this project, you agree to maintain a respectful and inclusive environment for everyone.
 
-## How to Contri  bute
+## How to Contribute
 
 ### Reporting Bugs
 

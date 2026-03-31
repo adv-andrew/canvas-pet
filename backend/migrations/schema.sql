@@ -24,6 +24,8 @@ create table if not exists canvas_users (
   display_name     text,
   happiness_score  integer     not null default 50 check (happiness_score >= 0 and happiness_score <= 100),
   reward_points    integer     not null default 0  check (reward_points >= 0),
+  role             text        not null default 'student' check (role in ('student', 'admin')),
+  streak           integer     not null default 0  check (streak >= 0),
   canvas_token     text,             -- see v3_add_personal_access_token.sql
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
@@ -57,6 +59,9 @@ create table if not exists saved_assignments (
   assignment_id    integer     not null,
   plannable_type   text        not null,
   course_id        integer,
+  title            text,
+  due_date         timestamptz,
+  completed_at     timestamptz,
   saved_at         timestamptz not null default now(),
 
   constraint saved_assignments_unique unique (canvas_user_id, institution_url, assignment_id)
@@ -88,7 +93,9 @@ create policy "canvas_users_update_own"
   with check (
     auth.uid() = id
     and happiness_score is not distinct from (select happiness_score from canvas_users where id = auth.uid())
-    and reward_points    is not distinct from (select reward_points    from canvas_users where id = auth.uid())
+    and reward_points   is not distinct from (select reward_points   from canvas_users where id = auth.uid())
+    and streak          is not distinct from (select streak          from canvas_users where id = auth.uid())
+    and role            is not distinct from (select role            from canvas_users where id = auth.uid())
   );
 
 -- saved_assignments: users may only touch rows belonging to their Canvas account.
@@ -116,3 +123,46 @@ create policy "saved_assignments_delete_own"
       select canvas_user_id from canvas_users where id = auth.uid()
     )
   );
+
+-- ---------------------------------------------------------------------------
+-- shop_items
+-- ---------------------------------------------------------------------------
+
+create table if not exists shop_items (
+  id          uuid        primary key default gen_random_uuid(),
+  name        text        not null,
+  description text,
+  cost        integer     not null check (cost >= 0),
+  image_url   text,
+  active      boolean     not null default true,
+  created_at  timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- user_items
+-- ---------------------------------------------------------------------------
+
+create table if not exists user_items (
+  user_id     uuid        not null references canvas_users(id) on delete cascade,
+  item_id     uuid        not null references shop_items(id) on delete cascade,
+  unlocked_at timestamptz not null default now(),
+  primary key (user_id, item_id)
+);
+
+-- ---------------------------------------------------------------------------
+-- Row Level Security (shop tables)
+-- ---------------------------------------------------------------------------
+
+alter table shop_items enable row level security;
+alter table user_items enable row level security;
+
+-- anyone can browse the shop
+create policy "shop_items_select_all" on shop_items
+  for select using (true);
+
+-- users can only see their own purchases
+create policy "user_items_select_own" on user_items
+  for select using (user_id in (select id from canvas_users where id = auth.uid()));
+
+-- No INSERT policy on user_items. All purchases go through the backend
+-- service-role client after verifying point balance.
