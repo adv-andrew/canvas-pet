@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyJwt } from '../../lib/verifyJwt'
 import { getCanvasUserIdForAuthUser } from '../../services/authService'
-import { fetchSavedAssignments, saveAssignment } from '../../services/assignmentService'
-import { SaveAssignmentSchema } from '../../schemas/assignments'
+import { fetchSavedAssignments, saveAssignment, createManualAssignment } from '../../services/assignmentService'
+import { SaveAssignmentSchema, CreateManualAssignmentSchema } from '../../schemas/assignments'
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204 })
@@ -36,15 +36,22 @@ export async function POST(req: NextRequest) {
   try {
     const { userId } = await verifyJwt(req.headers.get('Authorization'))
     const body: unknown = await req.json()
-    const input = SaveAssignmentSchema.parse(body)
+    const isCanvasSave = typeof body === 'object' && body !== null && 'assignment_id' in body
 
-    const storedCanvasUserId = await getCanvasUserIdForAuthUser(userId)
-    if (storedCanvasUserId !== input.canvas_user_id) {
-      return NextResponse.json({ error: 'canvas_user_id mismatch' }, { status: 403 })
+    if (isCanvasSave) {
+      const input = SaveAssignmentSchema.parse(body)
+      const storedCanvasUserId = await getCanvasUserIdForAuthUser(userId)
+      if (storedCanvasUserId !== input.canvas_user_id) {
+        return NextResponse.json({ error: 'canvas_user_id mismatch' }, { status: 403 })
+      }
+      await saveAssignment(input)
+      return NextResponse.json({ ok: true }, { status: 201 })
     }
 
-    await saveAssignment(input)
-    return NextResponse.json({ ok: true }, { status: 201 })
+    const input = CreateManualAssignmentSchema.parse(body)
+    const canvasUserId = await getCanvasUserIdForAuthUser(userId)
+    const result = await createManualAssignment(canvasUserId, input.institution_url, input)
+    return NextResponse.json({ ok: true, assignment_id: result.assignment_id }, { status: 201 })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     const status =
