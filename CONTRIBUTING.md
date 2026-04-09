@@ -54,6 +54,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 - At least one approving review is required.
 - PR description must explain **what** changed and **why**.
 - Keep PRs focused and small. Large PRs should be broken into smaller, logical chunks.
+- PR must only fix issue at hand and not touch unrelated components.
 
 ## Development Setup
 
@@ -81,5 +82,4 @@ npm run lint
 | `docs/`     | Documentation       | `docs/api-reference`           |
 
 ## Questions?
-
-If you have questions about contributing, open a discussion or reach out to the maintainers.
+If you have questions about contributing, feel free to reach out to the maintainers.
