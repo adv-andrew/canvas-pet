@@ -4,6 +4,7 @@ import { supabaseExtAuth } from '../../../shared/lib/supabaseExtAuth'
 import {
   apiSaveAssignment,
   apiUnsaveAssignment,
+  apiCompleteAssignment,
   apiStoreCanvasToken,
   apiPushCanvasSnapshot,
   runExtensionAuth,
@@ -34,6 +35,7 @@ interface PanelDataResult {
   refetch: () => void
   saveAssignment: (item: CanvasPlannerItem) => Promise<void>
   unsaveAssignment: (assignmentId: number) => Promise<void>
+  completeAssignment: (assignmentId: number) => Promise<{ points_earned: number } | void>
   handleConnectApp: (() => void) | undefined
   handleConnectAppWithPassword: ((password: string) => Promise<void>) | undefined
   handleSubmitManualToken: ((token: string) => Promise<void>) | undefined
@@ -124,6 +126,18 @@ export function usePanelData(): PanelDataResult {
         next.delete(assignmentId)
         return next
       })
+    },
+    [institutionUrl],
+  )
+
+  const [completedIds, setCompletedIds] = useState<Set<number>>(new Set())
+
+  const completeAssignment = useCallback(
+    async (assignmentId: number): Promise<{ points_earned: number } | void> => {
+      if (!institutionUrl) return
+      const result = await apiCompleteAssignment(assignmentId, institutionUrl)
+      setCompletedIds((prev) => new Set([...prev, assignmentId]))
+      return { points_earned: result.points_earned }
     },
     [institutionUrl],
   )
@@ -249,6 +263,8 @@ export function usePanelData(): PanelDataResult {
     ...item,
     isSaved: savedIds.has(item.plannable_id),
     savedAt: null,
+    isCompleted: completedIds.has(item.plannable_id),
+    completedAt: null,
   }))
 
   return {
@@ -263,6 +279,7 @@ export function usePanelData(): PanelDataResult {
     refetch,
     saveAssignment,
     unsaveAssignment,
+    completeAssignment,
     handleConnectApp,
     handleConnectAppWithPassword,
     handleSubmitManualToken,
