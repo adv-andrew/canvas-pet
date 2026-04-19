@@ -678,3 +678,64 @@ body {
   font-size: 13px;
   font-weight: 500;
 }
+
+/* ─── Pixel Pet ─────────────────────────────────────────────────── */
+.pixel-pet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pixel-pet-animate {
+  animation: pet-bounce 2s ease-in-out infinite;
+}
+
+.pixel-pet-animate.pixel-pet-ecstatic {
+  animation: pet-bounce-fast 1s ease-in-out infinite;
+}
+
+.pixel-pet-animate.pixel-pet-sad,
+.pixel-pet-animate.pixel-pet-miserable {
+  animation: pet-sway 3s ease-in-out infinite;
+}
+
+@keyframes pet-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pet-bounce-fast {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  25% { transform: translateY(-8px) rotate(2deg); }
+  50% { transform: translateY(0) rotate(-2deg); }
+  75% { transform: translateY(-8px) rotate(2deg); }
+}
+
+@keyframes pet-sway {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(2px) rotate(-3deg); }
+}
+
+.pixel-pet .sparkle {
+  fill: #fbbf24;
+  animation: sparkle-pulse 0.8s ease-in-out infinite;
+}
+
+.pixel-pet .sparkle-1 { animation-delay: 0s; }
+.pixel-pet .sparkle-2 { animation-delay: 0.2s; }
+.pixel-pet .sparkle-3 { animation-delay: 0.4s; }
+
+@keyframes sparkle-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.pixel-pet .sweat-drop {
+  animation: sweat-fall 1.5s ease-in infinite;
+}
+
+@keyframes sweat-fall {
+  0% { opacity: 0; transform: translateY(-5px); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(10px); }
+}
