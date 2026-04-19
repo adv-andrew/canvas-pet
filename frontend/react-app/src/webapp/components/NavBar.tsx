@@ -34,6 +34,13 @@ export function NavBar({ rewardPoints = 0 }: Props) {
       </div>
       <div className="navbar-right">
         <button
+          className="navbar-admin-btn"
+          onClick={() => navigate('/admin')}
+          title="Admin Panel"
+        >
+          Admin
+        </button>
+        <button
           className="navbar-rp-btn"
           onClick={() => navigate('/shop')}
           title="Reward Points — go to Shop"
