@@ -28,6 +28,8 @@ export interface CanvasPlannerItem {
 export interface TrackedAssignment extends CanvasPlannerItem {
   isSaved: boolean
   savedAt: string | null
+  isCompleted?: boolean
+  completedAt?: string | null
 }
 
 export interface CanvasAnnouncement {

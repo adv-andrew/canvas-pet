@@ -421,6 +421,68 @@ body {
   color: #065f46;
 }
 
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.complete-btn {
+  font-size: 14px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid #7c3aed;
+  background: #7c3aed;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.complete-btn:hover:not(:disabled) {
+  background: #6d28d9;
+  border-color: #6d28d9;
+}
+
+.complete-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.assignment-card.completed {
+  opacity: 0.7;
+  background: #f0fdf4;
+}
+
+.assignment-card.completed .assignment-title {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
+.points-earned-popup {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  animation: points-pop 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+}
+
+@keyframes points-pop {
+  0% { transform: scale(0.5) translateY(10px); opacity: 0; }
+  50% { transform: scale(1.1) translateY(-2px); }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.assignment-card {
+  position: relative;
+}
+
 /* Loading state */
 .loading {
   display: flex;

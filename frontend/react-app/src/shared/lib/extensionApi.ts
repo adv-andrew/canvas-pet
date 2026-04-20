@@ -6,8 +6,10 @@ import {
   apiClientFetchSavedIds,
   apiClientSaveAssignment,
   apiClientUnsaveAssignment,
+  apiClientCompleteAssignment,
   apiClientStoreCanvasToken,
   apiClientPushCanvasSnapshot,
+  type CompleteAssignmentResponse,
 } from './apiClient'
 
 async function getToken(): Promise<string> {
@@ -43,6 +45,13 @@ export async function apiSaveAssignment(
 
 export async function apiUnsaveAssignment(assignmentId: number, institutionUrl: string): Promise<void> {
   return apiClientUnsaveAssignment(assignmentId, institutionUrl, await getToken())
+}
+
+export async function apiCompleteAssignment(
+  assignmentId: number,
+  institutionUrl: string,
+): Promise<CompleteAssignmentResponse> {
+  return apiClientCompleteAssignment(assignmentId, institutionUrl, await getToken())
 }
 
 export async function apiStoreCanvasToken(canvasToken: string): Promise<void> {
