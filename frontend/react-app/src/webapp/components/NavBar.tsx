@@ -3,10 +3,11 @@ import { supabase } from '../lib/supabaseClient'
 
 interface Props {
   readonly rewardPoints?: number
+  readonly happiness?: number
   readonly isAdmin?: boolean
 }
 
-export function NavBar({ rewardPoints = 0, isAdmin = false }: Props) {
+export function NavBar({ rewardPoints = 0, happiness = 0, isAdmin = false }: Props) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -44,11 +45,20 @@ export function NavBar({ rewardPoints = 0, isAdmin = false }: Props) {
           </button>
         )}
         <button
-          className="navbar-rp-btn"
+          className="navbar-stat-pill navbar-happiness-pill"
+          onClick={() => navigate('/home')}
+          title="Happiness — go to Home"
+        >
+          <span className="navbar-stat-icon">❤️</span>
+          {happiness}%
+        </button>
+        <button
+          className="navbar-stat-pill navbar-rp-pill"
           onClick={() => navigate('/shop')}
           title="Reward Points — go to Shop"
         >
-          RP: {rewardPoints}
+          <span className="navbar-stat-icon">⭐</span>
+          {rewardPoints}
         </button>
         <button
           className="navbar-profile-btn"
