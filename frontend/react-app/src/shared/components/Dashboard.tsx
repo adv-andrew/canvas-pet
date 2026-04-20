@@ -26,6 +26,20 @@ interface Props {
   banner?: React.ReactNode
 }
 
+const OVERDUE_CUTOFF_DAYS = 30
+
+function applyDefaultWindow(items: TrackedAssignment[], showAll: boolean): TrackedAssignment[] {
+  if (showAll) return items
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - OVERDUE_CUTOFF_DAYS)
+  cutoff.setHours(0, 0, 0, 0)
+  return items.filter((item) => {
+    const dueAt = item.plannable.due_at ?? item.plannable_date
+    if (!dueAt) return true
+    return new Date(dueAt) >= cutoff
+  })
+}
+
 function groupAssignments(items: TrackedAssignment[]) {
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -78,8 +92,10 @@ function GroupSection({ title, items, onSave, onUnsave, onComplete }: GroupSecti
 
 export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onComplete, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onDismissLongAccess, onFullscreen, onMinimize, isFullscreen, hideHeader, banner }: Props) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
+  const [showAll, setShowAll] = useState(false)
 
-  const groups = groupAssignments(assignments)
+  const visibleAssignments = applyDefaultWindow(assignments, showAll)
+  const groups = groupAssignments(visibleAssignments)
   const hasAssignments = Object.values(groups).some((g) => g.length > 0)
 
   return (
@@ -175,6 +191,11 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
 
       {!loading && !error && activeTab === 'assignments' && (
         <>
+          <div className="show-all-row">
+            <button className="show-all-btn" onClick={() => setShowAll((v) => !v)}>
+              {showAll ? 'Show less' : 'Show all'}
+            </button>
+          </div>
           {!hasAssignments && (
             <div className="empty-state">
               <p>No upcoming assignments. 🎉</p>

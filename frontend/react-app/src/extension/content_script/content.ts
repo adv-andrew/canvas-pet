@@ -14,9 +14,21 @@ let lastSavedWidth = DEFAULT_WIDTH
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
 
 // --- Canvas data fetching (same origin) ---
+
+function getSemesterStart(): string {
+  const d = new Date()
+  const month = d.getMonth() // 0-indexed; Aug=7
+  const year = d.getFullYear()
+  const start = month >= 7
+    ? new Date(year, 7, 1)  // Aug 1 — fall semester
+    : new Date(year, 0, 1)  // Jan 1 — spring semester
+  return start.toISOString().split('T')[0]
+}
+
 async function fetchCanvasData() {
+  const startDate = getSemesterStart()
   const [items, user, stream] = await Promise.all([
-    fetch('/api/v1/planner/items?per_page=50&order=asc', { credentials: 'include' }).then((r) => {
+    fetch(`/api/v1/planner/items?per_page=100&order=asc&start_date=${startDate}`, { credentials: 'include' }).then((r) => {
       if (!r.ok) throw new Error(`Canvas API error: ${r.status}`)
       return r.json()
     }),
@@ -33,8 +45,12 @@ async function fetchCanvasData() {
   ])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const announcements = (stream as any[]).filter((a) => a.type === 'Announcement')
+  // Strip planner items that are announcement-type — those belong in the announcements tab,
+  // which is already populated from the activity stream above.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const filteredItems = (items as any[]).filter((item: any) => item.plannable_type !== 'announcement')
   const data = {
-    items,
+    items: filteredItems,
     announcements,
     userId: String((user as { id: number }).id),
     institutionUrl: window.location.origin,
