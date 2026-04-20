@@ -176,3 +176,108 @@ export async function apiClientGetCanvasSnapshot(token: string): Promise<CanvasS
   }
   return res.json() as Promise<CanvasSnapshotResponse>
 }
+
+export interface PetStats {
+  happiness_score: number
+  streak: number
+  reward_points: number
+}
+
+export async function apiClientGetPetStats(token: string): Promise<PetStats> {
+  const res = await fetch(`${BACKEND_URL}/api/pet`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
+  return res.json() as Promise<PetStats>
+}
+
+export interface CompleteAssignmentResponse {
+  ok: boolean
+  completed_at: string
+  happiness_score: number
+  streak: number
+  reward_points: number
+  points_earned: number
+}
+
+export async function apiClientCompleteAssignment(
+  assignmentId: number,
+  institutionUrl: string,
+  token: string,
+): Promise<CompleteAssignmentResponse> {
+  const url = `${BACKEND_URL}/api/assignments/${assignmentId}/complete?institution_url=${encodeURIComponent(institutionUrl)}`
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
+  return res.json() as Promise<CompleteAssignmentResponse>
+}
+
+export interface ShopItem {
+  id: string
+  name: string
+  description: string | null
+  cost: number
+  image_url: string | null
+}
+
+export async function apiClientGetShopItems(token: string): Promise<ShopItem[]> {
+  const res = await fetch(`${BACKEND_URL}/api/shop`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
+  const { data } = (await res.json()) as { data: ShopItem[] }
+  return data
+}
+
+export interface OwnedItem {
+  item_id: string
+  unlocked_at: string
+  shop_items: {
+    id: string
+    name: string
+    description: string | null
+    image_url: string | null
+  }
+}
+
+export async function apiClientGetOwnedItems(token: string): Promise<OwnedItem[]> {
+  const res = await fetch(`${BACKEND_URL}/api/shop/owned`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
+  const { data } = (await res.json()) as { data: OwnedItem[] }
+  return data
+}
+
+export interface PurchaseResponse {
+  ok: boolean
+  item_name: string
+  reward_points: number
+}
+
+export async function apiClientPurchaseItem(itemId: string, token: string): Promise<PurchaseResponse> {
+  const res = await fetch(`${BACKEND_URL}/api/shop/purchase`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ item_id: itemId }),
+  })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
+  return res.json() as Promise<PurchaseResponse>
+}
