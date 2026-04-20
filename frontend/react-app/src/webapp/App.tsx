@@ -9,6 +9,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Shop } from './pages/Shop'
 import { Account } from './pages/Account'
 import { CalendarPage } from './pages/CalendarPage'
+import { Admin } from './pages/Admin'
 
 // Handles the Supabase OAuth callback (?code=...) — exchanges the code for a
 // session, then redirects to the dashboard.
@@ -85,6 +86,7 @@ export function App() {
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/account" element={<Account />} />
+          <Route path="/admin" element={<Admin />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/sign-in" replace />} />
