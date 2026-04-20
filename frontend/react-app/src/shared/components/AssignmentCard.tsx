@@ -38,7 +38,6 @@ export function AssignmentCard({ assignment, onSave, onUnsave, onComplete }: Pro
     }
   }
 
-  const isSubmitted = assignment.submissions && assignment.submissions.submitted
   const isCompleted = assignment.isCompleted
 
   return (
