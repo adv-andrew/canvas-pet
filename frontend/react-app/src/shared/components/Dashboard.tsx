@@ -48,10 +48,13 @@ function groupAssignments(items: TrackedAssignment[]) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const weekEnd = new Date(today)
   weekEnd.setDate(weekEnd.getDate() + 7)
+  const monthEnd = new Date(today)
+  monthEnd.setDate(monthEnd.getDate() + 30)
 
   const overdue: TrackedAssignment[] = []
   const dueToday: TrackedAssignment[] = []
   const thisWeek: TrackedAssignment[] = []
+  const thisMonth: TrackedAssignment[] = []
   const later: TrackedAssignment[] = []
 
   for (const item of items) {
@@ -66,6 +69,7 @@ function groupAssignments(items: TrackedAssignment[]) {
     if (dueDay < today) overdue.push(item)
     else if (dueDay.getTime() === today.getTime()) dueToday.push(item)
     else if (dueDay <= weekEnd) thisWeek.push(item)
+    else if (dueDay <= monthEnd) thisMonth.push(item)
     else later.push(item)
   }
 
@@ -75,7 +79,48 @@ function groupAssignments(items: TrackedAssignment[]) {
     return bMs - aMs
   })
 
-  return { overdue, dueToday, thisWeek, later }
+  return { overdue, dueToday, thisWeek, thisMonth, later }
+}
+
+function groupAnnouncements(items: CanvasAnnouncement[]) {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const weekAgo = new Date(today)
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  const monthAgo = new Date(today)
+  monthAgo.setDate(monthAgo.getDate() - 30)
+
+  const todayItems: CanvasAnnouncement[] = []
+  const thisWeek: CanvasAnnouncement[] = []
+  const thisMonth: CanvasAnnouncement[] = []
+  const older: CanvasAnnouncement[] = []
+
+  for (const item of items) {
+    const created = new Date(item.created_at)
+    const createdDay = new Date(created.getFullYear(), created.getMonth(), created.getDate())
+
+    if (createdDay.getTime() === today.getTime()) todayItems.push(item)
+    else if (createdDay > weekAgo) thisWeek.push(item)
+    else if (createdDay > monthAgo) thisMonth.push(item)
+    else older.push(item)
+  }
+
+  return { today: todayItems, thisWeek, thisMonth, older }
+}
+
+interface AnnouncementSectionProps {
+  title: string
+  items: CanvasAnnouncement[]
+}
+
+function AnnouncementSection({ title, items }: Readonly<AnnouncementSectionProps>) {
+  if (items.length === 0) return null
+  return (
+    <section className="group-section">
+      <h3 className="group-title">{title}</h3>
+      {items.map((a) => <AnnouncementCard key={a.id} announcement={a} />)}
+    </section>
+  )
 }
 
 interface GroupSectionProps {
@@ -246,6 +291,7 @@ export function Dashboard({ assignments, announcements, loading, error, onComple
               )}
               <GroupSection title="Today" items={groups.dueToday} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
               <GroupSection title="This Week" items={groups.thisWeek} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
+              <GroupSection title="This Month" items={groups.thisMonth} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
               <GroupSection title="Later" items={groups.later} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
               <GroupSection title="Past Due" items={groups.overdue} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
             </>
@@ -260,13 +306,17 @@ export function Dashboard({ assignments, announcements, loading, error, onComple
               <p>No recent announcements.</p>
             </div>
           )}
-          {announcements.length > 0 && (
-            <section className="group-section">
-              {announcements.map((a) => (
-                <AnnouncementCard key={a.id} announcement={a} />
-              ))}
-            </section>
-          )}
+          {announcements.length > 0 && (() => {
+            const ag = groupAnnouncements(announcements)
+            return (
+              <>
+                <AnnouncementSection title="Today" items={ag.today} />
+                <AnnouncementSection title="This Week" items={ag.thisWeek} />
+                <AnnouncementSection title="This Month" items={ag.thisMonth} />
+                <AnnouncementSection title="Older" items={ag.older} />
+              </>
+            )
+          })()}
         </>
       )}
     </div>

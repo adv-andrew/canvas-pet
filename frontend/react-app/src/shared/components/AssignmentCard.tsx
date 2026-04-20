@@ -52,6 +52,25 @@ function getTypeIcon(type: string): string {
   return '📝'
 }
 
+// Mirrors backend calculateAward base (without streak, which is user-level)
+function calculateBaseRP(dueDate: string | null): number {
+  if (!dueDate) return 5
+  const daysEarly = (new Date(dueDate).getTime() - Date.now()) / (24 * 60 * 60 * 1000)
+  if (daysEarly < 0) return 0
+  if (daysEarly >= 2) return 15
+  if (daysEarly >= 1) return 10
+  return 5
+}
+
+function calculateHappinessGain(dueDate: string | null): number {
+  if (!dueDate) return 5
+  const daysEarly = (new Date(dueDate).getTime() - Date.now()) / (24 * 60 * 60 * 1000)
+  if (daysEarly < 0) return 0
+  if (daysEarly >= 2) return 10
+  if (daysEarly >= 1) return 7
+  return 5
+}
+
 export function AssignmentCard({ assignment, isPinned, onPin, onRemove, onComplete, courseColor }: Readonly<Props>) {
   const [completing, setCompleting] = useState(false)
   const [pointsEarned, setPointsEarned] = useState<number | null>(null)
@@ -60,6 +79,9 @@ export function AssignmentCard({ assignment, isPinned, onPin, onRemove, onComple
   const baseColor = courseColor ?? autoColor
   const color = isOverdue(assignment) ? OVERDUE_COLOR : baseColor
   const done = isCompleted(assignment)
+  const dueDate = assignment.plannable.due_at ?? assignment.plannable_date
+  const rpBase = calculateBaseRP(dueDate)
+  const happinessGain = calculateHappinessGain(dueDate)
 
   const handleComplete = async () => {
     if (!onComplete || completing) return
@@ -127,9 +149,29 @@ export function AssignmentCard({ assignment, isPinned, onPin, onRemove, onComple
         </a>
         <div className="calendar-detail-footer">
           <StatusBadge submissions={assignment.submissions} />
-          {assignment.plannable.points_possible != null && (
-            <span className="calendar-detail-points">{assignment.plannable.points_possible} pts</span>
-          )}
+          <div className="assignment-point-stats">
+            {assignment.plannable.points_possible != null && (
+              <span className="canvas-pts" title="Canvas grade points">
+                {assignment.plannable.points_possible} Points
+              </span>
+            )}
+            {!done && (
+              <>
+                <span
+                  className="app-rp-badge"
+                  title={`Reward Points earned on completion. Base: ${rpBase} RP (+0–10 streak bonus on top)`}
+                >
+                  +{rpBase} RP
+                </span>
+                <span
+                  className="app-happiness-badge"
+                  title="Pet happiness gained on completion"
+                >
+                  +{happinessGain}% ❤️
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

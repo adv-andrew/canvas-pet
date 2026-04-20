@@ -294,7 +294,12 @@ export function Calendar({ assignments }: Props) {
     if (month === 11) { setMonth(0); setYear(year + 1) }
     else setMonth(month + 1)
   }
-  const goToToday = () => { setYear(today.getFullYear()); setMonth(today.getMonth()) }
+  const goToToday = () => {
+    setYear(today.getFullYear())
+    setMonth(today.getMonth())
+    setSelectedDayKey(dayKey(today))
+    setPreviewId(null)
+  }
 
   return (
     <div className="calendar-page">
