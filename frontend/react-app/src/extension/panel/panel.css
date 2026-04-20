@@ -3,11 +3,13 @@
 /* Override the fixed 400px popup width — panel fills its iframe */
 body {
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .dashboard {
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 /* Panel wrapper */

@@ -1,3 +1,5 @@
+@import '../../shared/shared.css';
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -24,7 +26,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: #e53e3e;
+  background: var(--brand-red);
   color: white;
 }
 
@@ -336,6 +338,7 @@ body {
 
 /* Assignment card */
 .assignment-card {
+  position: relative;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -489,7 +492,7 @@ body {
   top: -8px;
   right: 12px;
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: white;
+  color: #78350f;
   font-size: 12px;
   font-weight: 700;
   padding: 4px 10px;
@@ -502,10 +505,6 @@ body {
   0% { transform: scale(0.5) translateY(10px); opacity: 0; }
   50% { transform: scale(1.1) translateY(-2px); }
   100% { transform: scale(1) translateY(0); opacity: 1; }
-}
-
-.assignment-card {
-  position: relative;
 }
 
 /* Loading state */
@@ -562,7 +561,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: #e53e3e;
+  background: var(--brand-red);
   color: white;
 }
 
@@ -927,4 +926,31 @@ body {
 .calendar-detail-points {
   font-size: 12px;
   color: #6b7280;
+}
+.assignment-point-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.canvas-pts {
+  font-size: 11px;
+  color: #6b7280;
+}
+.app-rp-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.app-happiness-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9d174d;
+  background: #fce7f3;
+  border-radius: 4px;
+  padding: 1px 5px;
 }
