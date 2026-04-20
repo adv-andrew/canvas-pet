@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { PrivacyPolicy } from './PrivacyPolicy'
 
 const WEBAPP_URL = import.meta.env.VITE_WEBAPP_URL as string
 
@@ -20,9 +21,12 @@ export function SignIn() {
       )
     }
   }, [])
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
+  const [consentChecked, setConsentChecked] = useState(false)
+  const [showPolicy, setShowPolicy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [confirmationSent, setConfirmationSent] = useState(false)
@@ -42,7 +46,11 @@ export function SignIn() {
     setLoading(true)
     try {
       if (isSignUp) {
-        const { error: signUpError } = await supabase.auth.signUp({ email, password })
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { privacy_consent_at: new Date().toISOString() } },
+        })
         if (signUpError) throw signUpError
         setConfirmationSent(true)
         return
@@ -58,12 +66,21 @@ export function SignIn() {
     }
   }
 
+  const switchMode = () => {
+    setIsSignUp(!isSignUp)
+    setConsentChecked(false)
+    setError(null)
+    setConfirmationSent(false)
+  }
+
   return (
     <div className="signin-page">
+      {showPolicy && <PrivacyPolicy onClose={() => setShowPolicy(false)} />}
+
       <div className="signin-card">
         <div className="signin-header">
           <h1>Canvas Pet</h1>
-          <p>Sign in to access your dashboard</p>
+          <p>{isSignUp ? 'Create your account' : 'Sign in to access your dashboard'}</p>
         </div>
 
         <button className="google-btn" onClick={handleGoogleSignIn}>
@@ -91,8 +108,34 @@ export function SignIn() {
             required
             className="signin-input"
           />
+
+          {isSignUp && (
+            <label className="signin-consent">
+              <input
+                type="checkbox"
+                checked={consentChecked}
+                onChange={(e) => setConsentChecked(e.target.checked)}
+              />
+              <span>
+                I have read and agree to the{' '}
+                <button
+                  type="button"
+                  className="signin-policy-link"
+                  onClick={() => setShowPolicy(true)}
+                >
+                  Privacy Policy
+                </button>
+              </span>
+            </label>
+          )}
+
           {error && <p className="signin-error">{error}</p>}
-          <button type="submit" className="signin-submit-btn" disabled={loading}>
+
+          <button
+            type="submit"
+            className="signin-submit-btn"
+            disabled={loading || (isSignUp && !consentChecked)}
+          >
             {loading ? 'Loading…' : isSignUp ? 'Create account' : 'Sign in'}
           </button>
         </form>
@@ -103,8 +146,12 @@ export function SignIn() {
           </p>
         )}
 
-        <button className="signin-toggle" onClick={() => { setIsSignUp(!isSignUp); setError(null); setConfirmationSent(false) }}>
+        <button className="signin-toggle" onClick={switchMode}>
           {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+        </button>
+
+        <button className="signin-policy-footer" onClick={() => setShowPolicy(true)}>
+          Privacy Policy
         </button>
       </div>
     </div>
