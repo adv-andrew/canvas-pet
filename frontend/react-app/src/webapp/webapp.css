@@ -968,7 +968,7 @@ body {
 
 .calendar-mini-title {
   font-size: 11px;
-  color: #374151;
+  color: #1d4ed8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1091,14 +1091,14 @@ body {
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: #1d4ed8;
   text-decoration: none;
   margin-bottom: 6px;
   line-height: 1.4;
 }
 .calendar-detail-title:hover {
   text-decoration: underline;
-  color: #f97316;
+  color: #1d4ed8;
 }
 .calendar-detail-footer {
   display: flex;
