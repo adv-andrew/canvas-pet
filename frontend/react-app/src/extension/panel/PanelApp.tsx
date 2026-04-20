@@ -33,6 +33,7 @@ export function PanelApp() {
         error={data.error}
         onSave={data.saveAssignment}
         onUnsave={data.unsaveAssignment}
+        onComplete={data.completeAssignment}
         onRefresh={data.refetch}
         onConnectApp={data.handleConnectApp}
         onConnectAppWithPassword={data.handleConnectAppWithPassword}

@@ -12,6 +12,7 @@ interface Props {
   error: string | null
   onSave: (item: CanvasPlannerItem) => Promise<void>
   onUnsave: (id: number) => Promise<void>
+  onComplete?: (id: number) => Promise<{ points_earned: number } | void>
   onRefresh: () => void
   onConnectApp?: () => void
   onConnectAppWithPassword?: (password: string) => Promise<void>
@@ -60,21 +61,22 @@ interface GroupSectionProps {
   items: TrackedAssignment[]
   onSave: (item: CanvasPlannerItem) => Promise<void>
   onUnsave: (id: number) => Promise<void>
+  onComplete?: (id: number) => Promise<{ points_earned: number } | void>
 }
 
-function GroupSection({ title, items, onSave, onUnsave }: GroupSectionProps) {
+function GroupSection({ title, items, onSave, onUnsave, onComplete }: GroupSectionProps) {
   if (items.length === 0) return null
   return (
     <section className="group-section">
       <h3 className="group-title">{title}</h3>
       {items.map((a) => (
-        <AssignmentCard key={a.plannable_id} assignment={a} onSave={onSave} onUnsave={onUnsave} />
+        <AssignmentCard key={a.plannable_id} assignment={a} onSave={onSave} onUnsave={onUnsave} onComplete={onComplete} />
       ))}
     </section>
   )
 }
 
-export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onDismissLongAccess, onFullscreen, onMinimize, isFullscreen, hideHeader, banner }: Props) {
+export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onComplete, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onDismissLongAccess, onFullscreen, onMinimize, isFullscreen, hideHeader, banner }: Props) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
 
   const groups = groupAssignments(assignments)
@@ -180,10 +182,10 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
           )}
           {hasAssignments && (
             <>
-              <GroupSection title="Overdue" items={groups.overdue} onSave={onSave} onUnsave={onUnsave} />
-              <GroupSection title="Today" items={groups.dueToday} onSave={onSave} onUnsave={onUnsave} />
-              <GroupSection title="This Week" items={groups.thisWeek} onSave={onSave} onUnsave={onUnsave} />
-              <GroupSection title="Later" items={groups.later} onSave={onSave} onUnsave={onUnsave} />
+              <GroupSection title="Overdue" items={groups.overdue} onSave={onSave} onUnsave={onUnsave} onComplete={onComplete} />
+              <GroupSection title="Today" items={groups.dueToday} onSave={onSave} onUnsave={onUnsave} onComplete={onComplete} />
+              <GroupSection title="This Week" items={groups.thisWeek} onSave={onSave} onUnsave={onUnsave} onComplete={onComplete} />
+              <GroupSection title="Later" items={groups.later} onSave={onSave} onUnsave={onUnsave} onComplete={onComplete} />
             </>
           )}
         </>
