@@ -166,3 +166,27 @@ create policy "user_items_select_own" on user_items
 
 -- No INSERT policy on user_items. All purchases go through the backend
 -- service-role client after verifying point balance.
+
+-- ---------------------------------------------------------------------------
+-- pinned_assignments
+-- ---------------------------------------------------------------------------
+
+create table if not exists pinned_assignments (
+  canvas_user_id  text        not null,
+  institution_url text        not null,
+  assignment_id   integer     not null,
+  pinned_at       timestamptz not null default now(),
+  primary key (canvas_user_id, institution_url, assignment_id),
+  foreign key (canvas_user_id) references canvas_users(canvas_user_id) on delete cascade
+);
+
+alter table pinned_assignments enable row level security;
+
+create policy "pinned_assignments_select_own" on pinned_assignments
+  for select using (
+    canvas_user_id in (
+      select canvas_user_id from canvas_users where id = auth.uid()
+    )
+  );
+
+-- No INSERT/DELETE policies — all writes go through the backend service role.
