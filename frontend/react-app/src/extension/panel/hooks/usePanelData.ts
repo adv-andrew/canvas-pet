@@ -5,6 +5,7 @@ import {
   apiSaveAssignment,
   apiUnsaveAssignment,
   apiCompleteAssignment,
+  apiSavePins,
   apiStoreCanvasToken,
   apiPushCanvasSnapshot,
   runExtensionAuth,
@@ -32,10 +33,14 @@ interface PanelDataResult {
   institutionUrl: string | null
   webAccount: { displayName: string | null; email: string | null } | null
   connectAppState: ConnectAppState
+  pinnedIds: Set<number>
   refetch: () => void
   saveAssignment: (item: CanvasPlannerItem) => Promise<void>
   unsaveAssignment: (assignmentId: number) => Promise<void>
   completeAssignment: (assignmentId: number) => Promise<{ points_earned: number } | void>
+  togglePin: (assignmentId: number) => void
+  clearPins: () => void
+  savePins: () => Promise<void>
   handleConnectApp: (() => void) | undefined
   handleConnectAppWithPassword: ((password: string) => Promise<void>) | undefined
   handleSubmitManualToken: ((token: string) => Promise<void>) | undefined
@@ -46,6 +51,8 @@ export function usePanelData(): PanelDataResult {
   const [rawItems, setRawItems] = useState<CanvasPlannerItem[]>([])
   const [announcements, setAnnouncements] = useState<CanvasAnnouncement[]>([])
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set())
+  const [completedIds, setCompletedIds] = useState<Set<number>>(new Set())
+  const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -59,13 +66,15 @@ export function usePanelData(): PanelDataResult {
     setUserId(payload.userId)
     setInstitutionUrl(payload.institutionUrl)
 
-    const ids = await runExtensionAuth({
+    const result = await runExtensionAuth({
       canvasUserId: payload.userId,
       instUrl: payload.institutionUrl,
       displayName: payload.displayName,
       email: payload.email,
     })
-    setSavedIds(ids)
+    setSavedIds(result.savedIds)
+    setCompletedIds(result.completedIds)
+    setPinnedIds(result.pinnedIds)
 
     // Check web account link (non-fatal)
     try {
@@ -130,8 +139,6 @@ export function usePanelData(): PanelDataResult {
     [institutionUrl],
   )
 
-  const [completedIds, setCompletedIds] = useState<Set<number>>(new Set())
-
   const completeAssignment = useCallback(
     async (assignmentId: number): Promise<{ points_earned: number } | void> => {
       if (!institutionUrl) return
@@ -141,6 +148,22 @@ export function usePanelData(): PanelDataResult {
     },
     [institutionUrl],
   )
+
+  const togglePin = useCallback((assignmentId: number) => {
+    setPinnedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(assignmentId)) next.delete(assignmentId)
+      else next.add(assignmentId)
+      return next
+    })
+  }, [])
+
+  const clearPins = useCallback(() => setPinnedIds(new Set()), [])
+
+  const savePins = useCallback(async () => {
+    if (!institutionUrl) return
+    await apiSavePins([...pinnedIds], institutionUrl)
+  }, [institutionUrl, pinnedIds])
 
   // Requests a Canvas API token from the content script via postMessage,
   // stores it on the backend, then opens the web app. Falls back gracefully
@@ -187,8 +210,6 @@ export function usePanelData(): PanelDataResult {
           setConnectAppState('error')
           return
         }
-        // Token storage failure is non-fatal — open the web app anyway.
-        // The web app will show a "sync not set up" prompt if the token is missing.
         try {
           await apiStoreCanvasToken(result.token)
         } catch {
@@ -276,10 +297,14 @@ export function usePanelData(): PanelDataResult {
     institutionUrl,
     webAccount,
     connectAppState,
+    pinnedIds,
     refetch,
     saveAssignment,
     unsaveAssignment,
     completeAssignment,
+    togglePin,
+    clearPins,
+    savePins,
     handleConnectApp,
     handleConnectAppWithPassword,
     handleSubmitManualToken,

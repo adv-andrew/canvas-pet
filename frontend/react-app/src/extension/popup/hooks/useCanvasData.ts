@@ -85,7 +85,7 @@ export function useCanvasData(): CanvasDataResult {
             displayName: response.displayName,
             email: response.email,
           })
-            .then((ids) => setSavedIds(ids))
+            .then((result) => setSavedIds(result.savedIds))
             .catch((err: Error) => setError(err.message))
             .finally(() => setLoading(false))
         },
