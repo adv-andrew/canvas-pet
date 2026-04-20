@@ -867,6 +867,12 @@ body {
   margin-bottom: 12px;
 }
 
+.calendar-side-pin-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .calendar-clear-pins {
   background: none;
   border: none;

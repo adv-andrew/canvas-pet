@@ -4,6 +4,7 @@ import { AssignmentCard } from '../../shared/components/AssignmentCard'
 
 interface Props {
   assignments: TrackedAssignment[]
+  onSavePins?: (ids: Set<number>) => Promise<void>
 }
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -103,7 +104,7 @@ function isSubmitted(a: TrackedAssignment): boolean {
 
 
 
-export function Calendar({ assignments }: Props) {
+export function Calendar({ assignments, onSavePins }: Readonly<Props>) {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
@@ -408,11 +409,18 @@ export function Calendar({ assignments }: Props) {
             <span>{selectedDayKey
               ? new Date(...(selectedDayKey.split('-').map(Number) as [number, number, number])).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
               : 'Assignments'}</span>
-            {pinnedIds.size > 0 && (
-              <button className="calendar-clear-pins" onClick={() => setPinnedIds(new Set())}>
-                Clear pins
-              </button>
-            )}
+            <div className="calendar-side-pin-actions">
+              {onSavePins && (
+                <button className="save-pins-btn" onClick={() => { void onSavePins(pinnedIds) }}>
+                  Save Pins
+                </button>
+              )}
+              {pinnedIds.size > 0 && (
+                <button className="calendar-clear-pins" onClick={() => setPinnedIds(new Set())}>
+                  Clear pins
+                </button>
+              )}
+            </div>
           </div>
           {sidePanelItems.length === 0 ? (
             <div className="calendar-side-empty">
