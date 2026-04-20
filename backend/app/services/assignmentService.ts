@@ -63,6 +63,69 @@ export async function completeAssignment(
   return data as { due_date: string | null; completed_at: string }
 }
 
+export async function fetchPinnedIds(
+  canvasUserId: string,
+  institutionUrl: string,
+): Promise<number[]> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('pinned_assignments')
+    .select('assignment_id')
+    .eq('canvas_user_id', canvasUserId)
+    .eq('institution_url', institutionUrl)
+  if (error) throw new Error(`Failed to fetch pinned assignments: ${error.message}`)
+  return (data ?? []).map((r) => r.assignment_id as number)
+}
+
+export async function setPinnedAssignments(
+  canvasUserId: string,
+  institutionUrl: string,
+  assignmentIds: number[],
+): Promise<void> {
+  const admin = getSupabaseAdmin()
+  const { error: delErr } = await admin
+    .from('pinned_assignments')
+    .delete()
+    .eq('canvas_user_id', canvasUserId)
+    .eq('institution_url', institutionUrl)
+  if (delErr) throw new Error(`Failed to clear pins: ${delErr.message}`)
+  if (assignmentIds.length === 0) return
+  const rows = assignmentIds.map((id) => ({
+    canvas_user_id: canvasUserId,
+    institution_url: institutionUrl,
+    assignment_id: id,
+  }))
+  const { error: insErr } = await admin.from('pinned_assignments').insert(rows)
+  if (insErr) throw new Error(`Failed to save pins: ${insErr.message}`)
+}
+
+export async function pinAssignment(
+  canvasUserId: string,
+  institutionUrl: string,
+  assignmentId: number,
+): Promise<void> {
+  const { error } = await getSupabaseAdmin()
+    .from('pinned_assignments')
+    .upsert(
+      { canvas_user_id: canvasUserId, institution_url: institutionUrl, assignment_id: assignmentId },
+      { onConflict: 'canvas_user_id,institution_url,assignment_id' },
+    )
+  if (error) throw new Error(`Failed to pin assignment: ${error.message}`)
+}
+
+export async function unpinAssignment(
+  canvasUserId: string,
+  institutionUrl: string,
+  assignmentId: number,
+): Promise<void> {
+  const { error } = await getSupabaseAdmin()
+    .from('pinned_assignments')
+    .delete()
+    .eq('canvas_user_id', canvasUserId)
+    .eq('institution_url', institutionUrl)
+    .eq('assignment_id', assignmentId)
+  if (error) throw new Error(`Failed to unpin assignment: ${error.message}`)
+}
+
 export async function createManualAssignment(
   canvasUserId: string,
   institutionUrl: string,
