@@ -67,20 +67,37 @@ body {
   gap: 8px;
 }
 
-.navbar-rp-btn {
-  background: #a82828;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: white;
+.navbar-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 20px;
-  transition: background 0.15s;
+  transition: filter 0.15s;
+  white-space: nowrap;
 }
 
-.navbar-rp-btn:hover {
-  background: #9b2424;
+.navbar-stat-pill:hover {
+  filter: brightness(0.92);
+}
+
+.navbar-stat-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.navbar-rp-pill {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.navbar-happiness-pill {
+  background: #ffe4e6;
+  color: #9f1239;
 }
 
 .navbar-profile-btn {
