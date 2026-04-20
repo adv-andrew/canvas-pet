@@ -28,7 +28,6 @@ const COLORS = {
 
 export function PixelPet({ happiness, size = 120, animate = true }: Props) {
   const mood = useMemo(() => getMood(happiness), [happiness])
-  const scale = size / 120
 
   const eyeStyle = useMemo(() => {
     switch (mood) {
