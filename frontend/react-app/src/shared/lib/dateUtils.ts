@@ -14,6 +14,13 @@ export function formatDueDate(dateStr: string | null): string {
   return `Due ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
 }
 
+export function formatExactDueDate(dateStr: string | null): string {
+  if (!dateStr) return 'No due date'
+  return new Date(dateStr).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  })
+}
+
 export function formatPostedDate(dateStr: string): string {
   const d = new Date(dateStr)
   const diff = daysBetween(d, new Date())

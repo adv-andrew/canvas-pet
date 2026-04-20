@@ -1,5 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import type { TrackedAssignment } from '../../shared/types/canvas'
+import { StatusBadge } from '../../shared/components/StatusBadge'
+import { formatExactDueDate } from '../../shared/lib/dateUtils'
 
 interface Props {
   assignments: TrackedAssignment[]
@@ -11,6 +13,31 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ]
 
+const COURSE_COLORS = [
+  { bg: '#dbeafe', text: '#1e40af' },
+  { bg: '#d1fae5', text: '#065f46' },
+  { bg: '#fce7f3', text: '#9d174d' },
+  { bg: '#e0e7ff', text: '#3730a3' },
+  { bg: '#ffedd5', text: '#7c2d12' },
+  { bg: '#f3e8ff', text: '#6b21a8' },
+  { bg: '#cffafe', text: '#164e63' },
+  { bg: '#fef9c3', text: '#713f12' },
+  { bg: '#dcfce7', text: '#14532d' },
+  { bg: '#ffe4e6', text: '#9f1239' },
+  { bg: '#fef3c7', text: '#92400e' },
+  { bg: '#d1d5fb', text: '#312e81' },
+  { bg: '#fde8d8', text: '#7c3929' },
+  { bg: '#d6f5e3', text: '#065535' },
+  { bg: '#fde2f3', text: '#831843' },
+  { bg: '#e0f2fe', text: '#0c4a6e' },
+  { bg: '#ecfdf5', text: '#064e3b' },
+  { bg: '#fdf4ff', text: '#701a75' },
+  { bg: '#fff7ed', text: '#7c2d12' },
+  { bg: '#f0fdf4', text: '#166534' },
+]
+const OVERDUE_COLOR = { bg: '#fee2e2', text: '#991b1b' }
+const MAX_VISIBLE = 3
+
 interface CalendarDay {
   date: Date
   isCurrentMonth: boolean
@@ -21,95 +48,272 @@ interface CalendarDay {
 function getCalendarDays(year: number, month: number, assignments: TrackedAssignment[]): CalendarDay[] {
   const today = new Date()
   const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
-
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
-
   const startDate = new Date(firstDay)
   startDate.setDate(startDate.getDate() - firstDay.getDay())
-
   const endDate = new Date(lastDay)
   endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()))
 
-  const assignmentsByDate = new Map<string, TrackedAssignment[]>()
+  const byDate = new Map<string, TrackedAssignment[]>()
   for (const a of assignments) {
     const dueAt = a.plannable.due_at ?? a.plannable_date
     if (!dueAt) continue
     const d = new Date(dueAt)
     const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-    if (!assignmentsByDate.has(key)) {
-      assignmentsByDate.set(key, [])
-    }
-    assignmentsByDate.get(key)!.push(a)
+    if (!byDate.has(key)) byDate.set(key, [])
+    byDate.get(key)!.push(a)
   }
 
   const days: CalendarDay[] = []
-  const current = new Date(startDate)
-
-  while (current <= endDate) {
-    const key = `${current.getFullYear()}-${current.getMonth()}-${current.getDate()}`
+  const cur = new Date(startDate)
+  while (cur <= endDate) {
+    const key = `${cur.getFullYear()}-${cur.getMonth()}-${cur.getDate()}`
     days.push({
-      date: new Date(current),
-      isCurrentMonth: current.getMonth() === month,
+      date: new Date(cur),
+      isCurrentMonth: cur.getMonth() === month,
       isToday: key === todayStr,
-      assignments: assignmentsByDate.get(key) ?? [],
+      assignments: byDate.get(key) ?? [],
     })
-    current.setDate(current.getDate() + 1)
+    cur.setDate(cur.getDate() + 1)
   }
-
   return days
 }
 
-function getEventClass(assignment: TrackedAssignment): string {
-  const dueAt = assignment.plannable.due_at ?? assignment.plannable_date
-  if (dueAt && new Date(dueAt) < new Date()) {
-    const submissions = assignment.submissions
-    if (submissions && !submissions.submitted) {
-      return 'overdue'
-    }
-  }
+function dayKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+}
 
-  const type = assignment.plannable_type
-  if (type === 'quiz') return 'quiz'
-  if (type === 'discussion_topic') return 'discussion'
-  return 'assignment'
+function isOverdue(a: TrackedAssignment): boolean {
+  const dueAt = a.plannable.due_at ?? a.plannable_date
+  if (!dueAt || new Date(dueAt) >= new Date()) return false
+  return !a.submissions || !a.submissions.submitted
+}
+
+function isDueSoon(a: TrackedAssignment): boolean {
+  const dueAt = a.plannable.due_at ?? a.plannable_date
+  if (!dueAt) return false
+  const ms = new Date(dueAt).getTime() - Date.now()
+  const submitted = a.submissions && a.submissions.submitted
+  return ms > 0 && ms <= 24 * 60 * 60 * 1000 && !submitted
+}
+
+function isSubmitted(a: TrackedAssignment): boolean {
+  return !!(a.submissions && (a.submissions.submitted || a.submissions.graded)) || !!a.isCompleted
+}
+
+function getTypeIcon(type: string): string {
+  if (type === 'quiz') return '📋'
+  if (type === 'discussion_topic') return '💬'
+  return '📝'
+}
+
+
+function CalendarDetailCard({
+  a,
+  courseColor,
+  isPinned,
+  onPin,
+  onRemove,
+}: {
+  a: TrackedAssignment
+  courseColor: { bg: string; text: string }
+  isPinned: boolean
+  onPin: () => void
+  onRemove: () => void
+}) {
+  const color = isOverdue(a) ? OVERDUE_COLOR : courseColor
+  return (
+    <div className={`calendar-detail-card${isPinned ? '' : ' preview'}`}>
+      <div className="calendar-detail-header" style={{ background: color.bg, color: color.text }}>
+        <span>{getTypeIcon(a.plannable_type)}</span>
+        <span className="calendar-detail-course">{a.context_name}</span>
+        <span className="calendar-detail-due">{formatExactDueDate(a.plannable.due_at ?? a.plannable_date)}</span>
+        <div className="calendar-detail-actions">
+          <button
+            className={`calendar-pin-btn${isPinned ? ' pinned' : ''}`}
+            onClick={(e) => { e.stopPropagation(); onPin() }}
+            title={isPinned ? 'Unpin' : 'Pin'}
+          >
+            📌
+          </button>
+          <button
+            className="calendar-remove-btn"
+            onClick={(e) => { e.stopPropagation(); onRemove() }}
+            title="Remove"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+      <div className="calendar-detail-body">
+        <a
+          className="calendar-detail-title"
+          href={a.plannable.html_url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {a.plannable.title}
+        </a>
+        <div className="calendar-detail-footer">
+          <StatusBadge submissions={a.submissions} />
+          {a.plannable.points_possible != null && (
+            <span className="calendar-detail-points">{a.plannable.points_possible} pts</span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function Calendar({ assignments }: Props) {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
+  const [selectedCourses, setSelectedCourses] = useState<Set<number | null>>(new Set())
+  const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set())
+  const [previewId, setPreviewId] = useState<number | null>(null)
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null)
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set())
+  const sidePanelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const dismiss = (e: MouseEvent) => {
+      if (sidePanelRef.current?.contains(e.target as Node)) return
+      setPreviewId(null)
+      setSelectedDayKey(null)
+    }
+    document.addEventListener('click', dismiss)
+    return () => document.removeEventListener('click', dismiss)
+  }, [])
+
+  const assignmentById = useMemo(() => {
+    const map = new Map<number, TrackedAssignment>()
+    for (const a of assignments) map.set(a.plannable_id, a)
+    return map
+  }, [assignments])
+
+  const courses = useMemo(() => {
+    const seen = new Map<number | null, string>()
+    for (const a of assignments) {
+      if (!seen.has(a.course_id)) seen.set(a.course_id, a.context_name ?? 'Other')
+    }
+    return Array.from(seen.entries()).map(([id, name]) => ({ id, name }))
+  }, [assignments])
+
+  const courseColorMap = useMemo(() => {
+    const map = new Map<number | null, number>()
+    courses.forEach((c, i) => map.set(c.id, i % COURSE_COLORS.length))
+    return map
+  }, [courses])
+
+  const filteredAssignments = useMemo(() => {
+    if (selectedCourses.size === 0) return assignments
+    return assignments.filter((a) => selectedCourses.has(a.course_id))
+  }, [assignments, selectedCourses])
 
   const days = useMemo(
-    () => getCalendarDays(year, month, assignments),
-    [year, month, assignments]
+    () => getCalendarDays(year, month, filteredAssignments),
+    [year, month, filteredAssignments]
   )
 
+  const sidePanelItems = useMemo(() => {
+    const items: Array<{ a: TrackedAssignment; isPinned: boolean }> = []
+    for (const id of pinnedIds) {
+      const a = assignmentById.get(id)
+      if (a) items.push({ a, isPinned: true })
+    }
+    if (selectedDayKey !== null) {
+      const day = days.find(d => dayKey(d.date) === selectedDayKey)
+      if (day) {
+        for (const a of day.assignments) {
+          if (!pinnedIds.has(a.plannable_id)) items.push({ a, isPinned: false })
+        }
+      }
+    } else if (previewId !== null && !pinnedIds.has(previewId)) {
+      const a = assignmentById.get(previewId)
+      if (a) items.push({ a, isPinned: false })
+    }
+    return items
+  }, [pinnedIds, previewId, selectedDayKey, assignmentById, days])
+
+  const getCourseColor = (id: number | null) => COURSE_COLORS[courseColorMap.get(id) ?? 0]
+
+  const getBorderColor = (a: TrackedAssignment) => {
+    if (isDueSoon(a)) return '#f59e0b'
+    if (isOverdue(a)) return OVERDUE_COLOR.text
+    return getCourseColor(a.course_id).text
+  }
+
+  const getCourseTextColor = (a: TrackedAssignment) => {
+    if (isOverdue(a)) return OVERDUE_COLOR.text
+    return getCourseColor(a.course_id).text
+  }
+
+  const toggleCourse = (id: number | null) => {
+    setSelectedCourses((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleDayClick = (e: React.MouseEvent | React.KeyboardEvent, key: string) => {
+    e.stopPropagation()
+    setSelectedDayKey(prev => prev === key ? null : key)
+    setPreviewId(null)
+  }
+
+  const toggleExpand = (key: string) => {
+    setExpandedDays((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const handleAssignmentClick = (e: React.MouseEvent, id: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSelectedDayKey(null)
+    setPreviewId(id)
+  }
+
+  const handleAssignmentDoubleClick = (e: React.MouseEvent, id: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setPinnedIds((prev) => new Set([...prev, id]))
+    setSelectedDayKey(null)
+    setPreviewId(null)
+  }
+
+  const pinAssignment = (id: number) => {
+    setPinnedIds((prev) => new Set([...prev, id]))
+    setPreviewId(null)
+  }
+
+  const unpinAssignment = (id: number) => {
+    setPinnedIds((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
+
   const goToPrev = () => {
-    if (month === 0) {
-      setMonth(11)
-      setYear(year - 1)
-    } else {
-      setMonth(month - 1)
-    }
+    if (month === 0) { setMonth(11); setYear(year - 1) }
+    else setMonth(month - 1)
   }
-
   const goToNext = () => {
-    if (month === 11) {
-      setMonth(0)
-      setYear(year + 1)
-    } else {
-      setMonth(month + 1)
-    }
+    if (month === 11) { setMonth(0); setYear(year + 1) }
+    else setMonth(month + 1)
   }
-
-  const goToToday = () => {
-    setYear(today.getFullYear())
-    setMonth(today.getMonth())
-  }
+  const goToToday = () => { setYear(today.getFullYear()); setMonth(today.getMonth()) }
 
   return (
-    <div className="page-content">
+    <div className="calendar-page">
       <div className="calendar-header">
         <div className="calendar-nav">
           <button className="calendar-nav-btn" onClick={goToPrev}>←</button>
@@ -119,33 +323,124 @@ export function Calendar({ assignments }: Props) {
         <button className="calendar-today-btn" onClick={goToToday}>Today</button>
       </div>
 
-      <div className="calendar-grid">
-        {WEEKDAYS.map((day) => (
-          <div key={day} className="calendar-weekday">{day}</div>
-        ))}
-        {days.map((day, i) => (
-          <div
-            key={i}
-            className={`calendar-day ${day.isCurrentMonth ? '' : 'other-month'} ${day.isToday ? 'today' : ''}`}
+      {courses.length > 0 && (
+        <div className="calendar-filters">
+          <button
+            className={`calendar-filter-pill ${selectedCourses.size === 0 ? 'active' : ''}`}
+            onClick={(e) => { e.stopPropagation(); setSelectedCourses(new Set()) }}
           >
-            <div className="calendar-day-number">{day.date.getDate()}</div>
-            {day.assignments.slice(0, 3).map((a) => (
-              <a
-                key={a.plannable_id}
-                className={`calendar-event ${getEventClass(a)}`}
-                href={a.plannable.html_url}
-                target="_blank"
-                rel="noreferrer"
-                title={a.plannable.title}
+            All
+          </button>
+          {courses.map(({ id, name }) => {
+            const active = selectedCourses.has(id)
+            const color = getCourseColor(id)
+            return (
+              <button
+                key={id ?? 'null'}
+                className="calendar-filter-pill"
+                style={active ? { backgroundColor: color.bg, color: color.text, borderColor: color.text } : undefined}
+                onClick={(e) => { e.stopPropagation(); toggleCourse(id) }}
               >
-                {a.plannable.title}
-              </a>
+                <span className="calendar-filter-dot" style={{ backgroundColor: color.text }} />
+                {name}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      <div className="calendar-layout">
+        <div className="calendar-main">
+          <div className="calendar-grid">
+            {WEEKDAYS.map((day) => (
+              <div key={day} className="calendar-weekday">{day}</div>
             ))}
-            {day.assignments.length > 3 && (
-              <div className="calendar-more">+{day.assignments.length - 3} more</div>
+            {days.map((day) => {
+              const key = dayKey(day.date)
+              const isSelected = selectedDayKey === key
+              const isExpanded = expandedDays.has(key)
+              const visible = isExpanded ? day.assignments : day.assignments.slice(0, MAX_VISIBLE)
+              const overflow = day.assignments.length - MAX_VISIBLE
+              return (
+                <div
+                  key={key}
+                  className={`calendar-day ${day.isCurrentMonth ? '' : 'other-month'} ${day.isToday ? 'today' : ''}${isSelected ? ' selected' : ''}${isExpanded ? ' expanded' : ''}`}
+                  onClick={(e) => handleDayClick(e, key)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleDayClick(e, key) }}
+                >
+                  <div className="calendar-day-number">{day.date.getDate()}</div>
+                  {visible.map((a) => {
+                    const isActive = previewId === a.plannable_id || pinnedIds.has(a.plannable_id) || isSelected
+                    return (
+                      <a
+                        key={a.plannable_id}
+                        className={`calendar-mini-card${isSubmitted(a) ? ' submitted' : ''}${isActive ? ' active' : ''}`}
+                        style={{ borderLeftColor: getBorderColor(a) }}
+                        href={a.plannable.html_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Click to preview · Double-click to pin"
+                        onClick={(e) => handleAssignmentClick(e, a.plannable_id)}
+                        onDoubleClick={(e) => handleAssignmentDoubleClick(e, a.plannable_id)}
+                      >
+                        <div className="calendar-mini-course" style={{ color: getCourseTextColor(a) }}>
+                          {a.context_name}
+                        </div>
+                        <div className="calendar-mini-title">
+                          {a.plannable.title}
+                          {isSubmitted(a) && <span className="calendar-event-check"> ✓</span>}
+                        </div>
+                      </a>
+                    )
+                  })}
+                  {overflow > 0 && !isExpanded && (
+                    <button className="calendar-more" onClick={(e) => { e.stopPropagation(); toggleExpand(key) }}>
+                      +{overflow} more
+                    </button>
+                  )}
+                  {isExpanded && (
+                    <button className="calendar-more collapse" onClick={(e) => { e.stopPropagation(); toggleExpand(key) }}>
+                      ↑ hide
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="calendar-side-panel" ref={sidePanelRef}>
+          <div className="calendar-side-heading">
+            <span>{selectedDayKey
+              ? new Date(...(selectedDayKey.split('-').map(Number) as [number, number, number])).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+              : 'Assignments'}</span>
+            {pinnedIds.size > 0 && (
+              <button className="calendar-clear-pins" onClick={() => setPinnedIds(new Set())}>
+                Clear pins
+              </button>
             )}
           </div>
-        ))}
+          {sidePanelItems.length === 0 ? (
+            <div className="calendar-side-empty">
+              Click a date number or assignment to preview. Double-click an assignment or the press pin icon to pin it.
+            </div>
+          ) : (
+            sidePanelItems.map(({ a, isPinned }) => (
+              <CalendarDetailCard
+                key={a.plannable_id}
+                a={a}
+                courseColor={getCourseColor(a.course_id)}
+                isPinned={isPinned}
+                onPin={() => isPinned ? unpinAssignment(a.plannable_id) : pinAssignment(a.plannable_id)}
+                onRemove={() => {
+                  unpinAssignment(a.plannable_id)
+                  if (previewId === a.plannable_id) setPreviewId(null)
+                  if (selectedDayKey !== null && !pinnedIds.has(a.plannable_id)) setSelectedDayKey(null)
+                }}
+              />
+            ))
+          )}
+        </div>
       </div>
     </div>
   )
