@@ -2,9 +2,13 @@ import type { CanvasPlannerItem } from '../types/canvas'
 
 interface Props {
   submissions: CanvasPlannerItem['submissions']
+  isAppCompleted?: boolean
 }
 
-export function StatusBadge({ submissions }: Props) {
+export function StatusBadge({ submissions, isAppCompleted }: Readonly<Props>) {
+  if (isAppCompleted) {
+    return <span className="badge badge-completed">Completed</span>
+  }
   if (!submissions) {
     return <span className="badge badge-pending">Pending</span>
   }

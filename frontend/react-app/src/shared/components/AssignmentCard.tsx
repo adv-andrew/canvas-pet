@@ -6,7 +6,9 @@ import { formatExactDueDate } from '../lib/dateUtils'
 interface Props {
   assignment: TrackedAssignment
   isPinned: boolean
+  isSelected?: boolean
   onPin: () => void
+  onSelect?: () => void
   onRemove?: () => void
   onComplete?: (id: number) => Promise<{ points_earned: number } | void>
   courseColor?: { bg: string; text: string }
@@ -42,8 +44,12 @@ function isOverdue(a: TrackedAssignment): boolean {
   return !a.submissions || !a.submissions.submitted
 }
 
+function isCanvasCompleted(a: TrackedAssignment): boolean {
+  return !!(a.submissions && (a.submissions.submitted || a.submissions.graded))
+}
+
 function isCompleted(a: TrackedAssignment): boolean {
-  return !!(a.submissions && (a.submissions.submitted || a.submissions.graded)) || !!a.isCompleted
+  return isCanvasCompleted(a) || !!a.isCompleted
 }
 
 function getTypeIcon(type: string): string {
@@ -71,7 +77,7 @@ function calculateHappinessGain(dueDate: string | null): number {
   return 5
 }
 
-export function AssignmentCard({ assignment, isPinned, onPin, onRemove, onComplete, courseColor }: Readonly<Props>) {
+export function AssignmentCard({ assignment, isPinned, isSelected, onPin, onSelect, onRemove, onComplete, courseColor }: Readonly<Props>) {
   const [completing, setCompleting] = useState(false)
   const [pointsEarned, setPointsEarned] = useState<number | null>(null)
 
@@ -99,8 +105,10 @@ export function AssignmentCard({ assignment, isPinned, onPin, onRemove, onComple
 
   return (
     <div
-      className={`assignment-card${isPinned ? ' pinned' : ''}${!isPinned && onRemove ? ' preview' : ''}`}
+      className={`assignment-card${isPinned ? ' pinned' : ''}${!isPinned && onRemove ? ' preview' : ''}${isSelected ? ' selected' : ''}`}
       onDoubleClick={onPin}
+      onClick={onSelect}
+      onKeyDown={(e) => { if (e.key === 'Enter') onSelect?.() }}
     >
       {pointsEarned !== null && (
         <div className="points-earned-popup">+{pointsEarned} RP!</div>
@@ -148,7 +156,7 @@ export function AssignmentCard({ assignment, isPinned, onPin, onRemove, onComple
           {assignment.plannable.title}
         </a>
         <div className="calendar-detail-footer">
-          <StatusBadge submissions={assignment.submissions} />
+          <StatusBadge submissions={assignment.submissions} isAppCompleted={!!assignment.isCompleted} />
           <div className="assignment-point-stats">
             {assignment.plannable.points_possible != null && (
               <span className="canvas-pts" title="Canvas grade points">
