@@ -29,6 +29,7 @@ export function NavBar({ rewardPoints = 0 }: Props) {
       <div className="navbar-links">
         {link('/home', 'Home')}
         {link('/dashboard', 'Dashboard')}
+        {link('/calendar', 'Calendar')}
         {link('/shop', 'Shop')}
       </div>
       <div className="navbar-right">
