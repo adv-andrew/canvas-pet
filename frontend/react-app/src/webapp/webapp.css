@@ -19,7 +19,7 @@ body {
   align-items: center;
   height: 52px;
   padding: 0 24px;
-  background: #e53e3e;
+  background: #c53030;
   color: white;
   position: sticky;
   top: 0;
@@ -52,12 +52,12 @@ body {
 
 .navbar-link:hover {
   color: white;
-  background: rgba(255, 255, 255, 0.15);
+  background: #a82828;
 }
 
 .navbar-link.active {
   color: white;
-  background: rgba(255, 255, 255, 0.2);
+  background: #9b2424;
 }
 
 .navbar-right {
@@ -68,7 +68,7 @@ body {
 }
 
 .navbar-rp-btn {
-  background: rgba(255, 255, 255, 0.15);
+  background: #a82828;
   border: 1px solid rgba(255, 255, 255, 0.4);
   color: white;
   font-size: 12px;
@@ -80,11 +80,11 @@ body {
 }
 
 .navbar-rp-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: #9b2424;
 }
 
 .navbar-profile-btn {
-  background: rgba(255, 255, 255, 0.15);
+  background: #a82828;
   border: 1px solid rgba(255, 255, 255, 0.4);
   color: white;
   cursor: pointer;
@@ -99,7 +99,7 @@ body {
 }
 
 .navbar-profile-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: #9b2424;
 }
 
 .navbar-signout-btn {
@@ -115,7 +115,7 @@ body {
 }
 
 .navbar-signout-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: #a82828;
 }
 
 /* ─── Page layout ─────────────────────────────────────────────── */
@@ -264,7 +264,7 @@ body {
 
 .signin-submit-btn {
   padding: 10px 16px;
-  background: #e53e3e;
+  background: #c53030;
   color: white;
   border: none;
   border-radius: 6px;
@@ -275,7 +275,7 @@ body {
 }
 
 .signin-submit-btn:hover:not(:disabled) {
-  background: #c53030;
+  background: #9b2c2c;
 }
 
 .signin-submit-btn:disabled {
@@ -733,7 +733,7 @@ body {
 }
 
 .calendar-today-btn {
-  background: #7c3aed;
+  background: #c53030;
   border: none;
   border-radius: 6px;
   padding: 6px 16px;
@@ -744,7 +744,7 @@ body {
 }
 
 .calendar-today-btn:hover {
-  background: #6d28d9;
+  background: #9b2c2c;
 }
 
 .calendar-grid {
@@ -796,8 +796,8 @@ body {
 }
 
 .calendar-filter-pill.active {
-  background: #e53e3e;
-  border-color: #e53e3e;
+  background: #c53030;
+  border-color: #c53030;
   color: white;
 }
 
@@ -891,12 +891,12 @@ body {
 }
 
 .calendar-day.today {
-  background: #fff7ed;
+  background: #fff5f5;
 }
 
 .calendar-day.selected {
-  background: #fff7ed;
-  outline: 2px solid #f97316;
+  background: #fff5f5;
+  outline: 2px solid #e53e3e;
   outline-offset: -2px;
 }
 
@@ -914,7 +914,7 @@ body {
   line-height: 1;
 }
 .calendar-day-number:hover {
-  color: #f97316;
+  color: #e53e3e;
 }
 
 .calendar-day.other-month .calendar-day-number {
@@ -922,7 +922,7 @@ body {
 }
 
 .calendar-day.today .calendar-day-number {
-  background: #f97316;
+  background: #c53030;
   color: white;
   width: 24px;
   height: 24px;
@@ -950,7 +950,7 @@ body {
 }
 
 .calendar-mini-card.active {
-  background: #ffedd5;
+  background: #fee2e2;
 }
 
 .calendar-mini-card.submitted {
@@ -1112,9 +1112,9 @@ body {
 
 /* ─── Admin page ─────────────────────────────────────────────────── */
 .navbar-admin-btn {
-  background: rgba(255, 255, 255, 0.1);
+  background: #a82828;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  color: rgba(255, 255, 255, 0.8);
+  color: white;
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
@@ -1124,7 +1124,7 @@ body {
 }
 
 .navbar-admin-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: #9b2424;
   color: white;
 }
 
@@ -1178,8 +1178,8 @@ body {
 }
 
 .admin-tab.active {
-  background: #e53e3e;
-  border-color: #e53e3e;
+  background: #c53030;
+  border-color: #c53030;
   color: white;
 }
 
@@ -1206,7 +1206,7 @@ body {
 
 .admin-add-form button {
   padding: 8px 20px;
-  background: #e53e3e;
+  background: #c53030;
   border: none;
   border-radius: 6px;
   color: white;
@@ -1217,7 +1217,7 @@ body {
 }
 
 .admin-add-form button:hover:not(:disabled) {
-  background: #c53030;
+  background: #9b2c2c;
 }
 
 .admin-add-form button:disabled {
