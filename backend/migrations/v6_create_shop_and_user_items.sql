@@ -22,9 +22,11 @@ CREATE TABLE IF NOT EXISTS user_items (
 ALTER TABLE shop_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_items ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "shop_items_select_all" ON shop_items;
 CREATE POLICY "shop_items_select_all" ON shop_items
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "user_items_select_own" ON user_items;
 CREATE POLICY "user_items_select_own" ON user_items
   FOR SELECT USING (user_id IN (SELECT id FROM canvas_users WHERE id = auth.uid()));
 
