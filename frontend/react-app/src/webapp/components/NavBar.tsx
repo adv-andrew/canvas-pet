@@ -2,10 +2,11 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 
 interface Props {
-  rewardPoints?: number
+  readonly rewardPoints?: number
+  readonly isAdmin?: boolean
 }
 
-export function NavBar({ rewardPoints = 0 }: Props) {
+export function NavBar({ rewardPoints = 0, isAdmin = false }: Props) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -33,13 +34,15 @@ export function NavBar({ rewardPoints = 0 }: Props) {
         {link('/shop', 'Shop')}
       </div>
       <div className="navbar-right">
-        <button
-          className="navbar-admin-btn"
-          onClick={() => navigate('/admin')}
-          title="Admin Panel"
-        >
-          Admin
-        </button>
+        {isAdmin && (
+          <button
+            className="navbar-admin-btn"
+            onClick={() => navigate('/admin')}
+            title="Admin Panel"
+          >
+            Admin
+          </button>
+        )}
         <button
           className="navbar-rp-btn"
           onClick={() => navigate('/shop')}
