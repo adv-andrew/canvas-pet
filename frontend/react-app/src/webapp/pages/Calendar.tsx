@@ -176,6 +176,8 @@ export function Calendar({ assignments }: Props) {
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null)
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set())
   const sidePanelRef = useRef<HTMLDivElement>(null)
+  const assignmentClickTimers = useRef(new Map<number, ReturnType<typeof setTimeout>>())
+  const dateClickTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
 
   useEffect(() => {
     const dismiss = (e: MouseEvent) => {
@@ -185,6 +187,13 @@ export function Calendar({ assignments }: Props) {
     }
     document.addEventListener('click', dismiss)
     return () => document.removeEventListener('click', dismiss)
+  }, [])
+
+  // Clean up pending timers on unmount
+  useEffect(() => {
+    const at = assignmentClickTimers.current
+    const dt = dateClickTimers.current
+    return () => { at.forEach(clearTimeout); dt.forEach(clearTimeout) }
   }, [])
 
   const assignmentById = useMemo(() => {
@@ -274,19 +283,57 @@ export function Calendar({ assignments }: Props) {
     })
   }
 
-  const handleAssignmentClick = (e: React.MouseEvent, id: number) => {
+  const DBLCLICK_MS = 400
+
+  // Single click: immediately preview. Fast second click within DBLCLICK_MS: toggle pin.
+  const handleAssignmentInteraction = (e: React.MouseEvent, id: number) => {
     e.preventDefault()
     e.stopPropagation()
-    setSelectedDayKey(null)
-    setPreviewId(id)
+    if (assignmentClickTimers.current.has(id)) {
+      clearTimeout(assignmentClickTimers.current.get(id)!)
+      assignmentClickTimers.current.delete(id)
+      setPinnedIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        return next
+      })
+      setSelectedDayKey(null)
+      setPreviewId(null)
+    } else {
+      setSelectedDayKey(null)
+      setPreviewId(id)
+      assignmentClickTimers.current.set(id, setTimeout(() => {
+        assignmentClickTimers.current.delete(id)
+      }, DBLCLICK_MS))
+    }
   }
 
-  const handleAssignmentDoubleClick = (e: React.MouseEvent, id: number) => {
-    e.preventDefault()
+  // Single click on date number: select day. Fast second click: toggle pin all for that day.
+  const handleDateNumberClick = (e: React.MouseEvent, key: string, dayAssignments: TrackedAssignment[]) => {
     e.stopPropagation()
-    setPinnedIds((prev) => new Set([...prev, id]))
-    setSelectedDayKey(null)
-    setPreviewId(null)
+    if (dateClickTimers.current.has(key)) {
+      clearTimeout(dateClickTimers.current.get(key)!)
+      dateClickTimers.current.delete(key)
+      setSelectedDayKey(null)
+      setPreviewId(null)
+      const ids = dayAssignments.map((a) => a.plannable_id)
+      if (ids.length > 0) {
+        setPinnedIds((prev) => {
+          const allPinned = ids.every((id) => prev.has(id))
+          const next = new Set(prev)
+          if (allPinned) ids.forEach((id) => next.delete(id))
+          else ids.forEach((id) => next.add(id))
+          return next
+        })
+      }
+    } else {
+      setSelectedDayKey((prev) => (prev === key ? null : key))
+      setPreviewId(null)
+      dateClickTimers.current.set(key, setTimeout(() => {
+        dateClickTimers.current.delete(key)
+      }, DBLCLICK_MS))
+    }
   }
 
   const pinAssignment = (id: number) => {
@@ -368,7 +415,13 @@ export function Calendar({ assignments }: Props) {
                   onClick={(e) => handleDayClick(e, key)}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleDayClick(e, key) }}
                 >
-                  <div className="calendar-day-number">{day.date.getDate()}</div>
+                  <button
+                    className="calendar-day-number"
+                    title={day.assignments.length > 0 ? 'Double-click to pin/unpin all' : undefined}
+                    onClick={(e) => handleDateNumberClick(e, key, day.assignments)}
+                  >
+                    {day.date.getDate()}
+                  </button>
                   {visible.map((a) => {
                     const isActive = previewId === a.plannable_id || pinnedIds.has(a.plannable_id) || isSelected
                     return (
@@ -379,9 +432,8 @@ export function Calendar({ assignments }: Props) {
                         href={a.plannable.html_url}
                         target="_blank"
                         rel="noreferrer"
-                        title="Click to preview · Double-click to pin"
-                        onClick={(e) => handleAssignmentClick(e, a.plannable_id)}
-                        onDoubleClick={(e) => handleAssignmentDoubleClick(e, a.plannable_id)}
+                        title="Click to preview · Double-click to pin/unpin"
+                        onClick={(e) => handleAssignmentInteraction(e, a.plannable_id)}
                       >
                         <div className="calendar-mini-course" style={{ color: getCourseTextColor(a) }}>
                           {a.context_name}
