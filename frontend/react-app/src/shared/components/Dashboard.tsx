@@ -10,6 +10,10 @@ interface Props {
   announcements: CanvasAnnouncement[]
   loading: boolean
   error: string | null
+  pinnedIds?: Set<number>
+  onTogglePin?: (id: number) => void
+  onSavePins?: () => Promise<void>
+  onClearPins?: () => void
   onComplete?: (id: number) => Promise<{ points_earned: number } | void>
   onRefresh: () => void
   onConnectApp?: () => void
@@ -30,6 +34,10 @@ function isSubmitted(item: TrackedAssignment): boolean {
   return item.submissions !== false && item.submissions.submitted
 }
 
+function isAppCompleted(item: TrackedAssignment): boolean {
+  return !!item.isCompleted
+}
+
 function applyFilters(items: TrackedAssignment[], showAll: boolean): TrackedAssignment[] {
   if (showAll) return items
   const cutoff = new Date()
@@ -37,6 +45,7 @@ function applyFilters(items: TrackedAssignment[], showAll: boolean): TrackedAssi
   cutoff.setHours(0, 0, 0, 0)
   return items.filter((item) => {
     if (isSubmitted(item)) return false
+    if (isAppCompleted(item)) return false
     const dueAt = item.plannable.due_at ?? item.plannable_date
     if (dueAt && new Date(dueAt) < cutoff) return false
     return true
@@ -127,11 +136,13 @@ interface GroupSectionProps {
   title: string
   items: TrackedAssignment[]
   pinnedIds: Set<number>
-  onPin: (id: number) => void
+  selectedId: number | null
+  onTogglePin: (id: number) => void
+  onSelect: (id: number) => void
   onComplete?: (id: number) => Promise<{ points_earned: number } | void>
 }
 
-function GroupSection({ title, items, pinnedIds, onPin, onComplete }: Readonly<GroupSectionProps>) {
+function GroupSection({ title, items, pinnedIds, selectedId, onTogglePin, onSelect, onComplete }: Readonly<GroupSectionProps>) {
   if (items.length === 0) return null
   return (
     <section className="group-section">
@@ -141,7 +152,9 @@ function GroupSection({ title, items, pinnedIds, onPin, onComplete }: Readonly<G
           key={a.plannable_id}
           assignment={a}
           isPinned={pinnedIds.has(a.plannable_id)}
-          onPin={() => onPin(a.plannable_id)}
+          isSelected={selectedId === a.plannable_id}
+          onPin={() => onTogglePin(a.plannable_id)}
+          onSelect={() => onSelect(a.plannable_id)}
           onComplete={onComplete}
         />
       ))}
@@ -149,18 +162,66 @@ function GroupSection({ title, items, pinnedIds, onPin, onComplete }: Readonly<G
   )
 }
 
-export function Dashboard({ assignments, announcements, loading, error, onComplete, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onDismissLongAccess, onFullscreen, onMinimize, isFullscreen, hideHeader, banner }: Readonly<Props>) {
+export function Dashboard({
+  assignments,
+  announcements,
+  loading,
+  error,
+  pinnedIds: externalPinnedIds,
+  onTogglePin,
+  onSavePins,
+  onClearPins,
+  onComplete,
+  onRefresh,
+  onConnectApp,
+  onConnectAppWithPassword,
+  onSubmitManualToken,
+  connectAppState,
+  onDismissLongAccess,
+  onFullscreen,
+  onMinimize,
+  isFullscreen,
+  hideHeader,
+  banner,
+}: Readonly<Props>) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
   const [showAll, setShowAll] = useState(false)
-  const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set())
+  const [localPinnedIds, setLocalPinnedIds] = useState<Set<number>>(new Set())
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  const togglePin = (id: number) => {
-    setPinnedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+  const pinnedIds = externalPinnedIds ?? localPinnedIds
+
+  const handleClearPins = () => {
+    if (onClearPins) onClearPins()
+    else setLocalPinnedIds(new Set())
+  }
+
+  const handleTogglePin = (id: number) => {
+    if (onTogglePin) {
+      onTogglePin(id)
+    } else {
+      setLocalPinnedIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        return next
+      })
+    }
+  }
+
+  const handleSelect = (id: number) => {
+    setSelectedId((prev) => (prev === id ? null : id))
+  }
+
+  const handleSavePins = async () => {
+    if (!onSavePins) return
+    setSaving(true)
+    try {
+      await onSavePins()
+    } finally {
+      setSaving(false)
+    }
   }
 
   const visibleAssignments = applyFilters(assignments, showAll)
@@ -168,7 +229,7 @@ export function Dashboard({ assignments, announcements, loading, error, onComple
   const groups = groupAssignments(unpinnedVisible)
   const pinnedAssignments = assignments.filter((a) => pinnedIds.has(a.plannable_id))
   const hasAssignments = pinnedAssignments.length > 0 || Object.values(groups).some((g) => g.length > 0)
-  const pendingCount = assignments.filter((a) => !isSubmitted(a)).length
+  const pendingCount = assignments.filter((a) => !isSubmitted(a) && !isAppCompleted(a)).length
 
   return (
     <div className="dashboard">
@@ -267,6 +328,16 @@ export function Dashboard({ assignments, announcements, loading, error, onComple
             <button className="show-all-btn" onClick={() => setShowAll((v) => !v)}>
               {showAll ? 'Show less' : 'Show all'}
             </button>
+            <div className="pin-actions">
+              {pinnedIds.size > 0 && (
+                <button className="clear-pins-btn" onClick={handleClearPins}>Clear Pins</button>
+              )}
+              {onSavePins && (
+                <button className="save-pins-btn" onClick={() => { void handleSavePins() }} disabled={saving}>
+                  {saving ? 'Saving…' : 'Save Pins'}
+                </button>
+              )}
+            </div>
           </div>
           {!hasAssignments && (
             <div className="empty-state">
@@ -283,17 +354,19 @@ export function Dashboard({ assignments, announcements, loading, error, onComple
                       key={a.plannable_id}
                       assignment={a}
                       isPinned={true}
-                      onPin={() => togglePin(a.plannable_id)}
+                      isSelected={selectedId === a.plannable_id}
+                      onPin={() => handleTogglePin(a.plannable_id)}
+                      onSelect={() => handleSelect(a.plannable_id)}
                       onComplete={onComplete}
                     />
                   ))}
                 </section>
               )}
-              <GroupSection title="Today" items={groups.dueToday} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
-              <GroupSection title="This Week" items={groups.thisWeek} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
-              <GroupSection title="This Month" items={groups.thisMonth} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
-              <GroupSection title="Later" items={groups.later} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
-              <GroupSection title="Past Due" items={groups.overdue} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
+              <GroupSection title="Today" items={groups.dueToday} pinnedIds={pinnedIds} selectedId={selectedId} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
+              <GroupSection title="This Week" items={groups.thisWeek} pinnedIds={pinnedIds} selectedId={selectedId} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
+              <GroupSection title="This Month" items={groups.thisMonth} pinnedIds={pinnedIds} selectedId={selectedId} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
+              <GroupSection title="Later" items={groups.later} pinnedIds={pinnedIds} selectedId={selectedId} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
+              <GroupSection title="Past Due" items={groups.overdue} pinnedIds={pinnedIds} selectedId={selectedId} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
             </>
           )}
         </>
