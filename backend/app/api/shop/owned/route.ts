@@ -9,10 +9,19 @@ export async function OPTIONS() {
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await verifyJwt(req.headers.get('Authorization'))
+
+    const { data: canvasUser, error: userErr } = await getSupabaseAdmin()
+      .from('canvas_users')
+      .select('id')
+      .or(`id.eq.${userId},web_user_id.eq.${userId}`)
+      .maybeSingle()
+    if (userErr) throw new Error(userErr.message)
+    if (!canvasUser) return NextResponse.json({ data: [] })
+
     const { data, error } = await getSupabaseAdmin()
       .from('user_items')
       .select('item_id, unlocked_at, shop_items(id, name, description, image_url)')
-      .eq('user_id', userId)
+      .eq('user_id', canvasUser.id)
     if (error) throw new Error(error.message)
     return NextResponse.json({ data })
   } catch (err) {
