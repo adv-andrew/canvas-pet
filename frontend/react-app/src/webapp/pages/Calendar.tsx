@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import type { TrackedAssignment } from '../../shared/types/canvas'
-import { StatusBadge } from '../../shared/components/StatusBadge'
-import { formatExactDueDate } from '../../shared/lib/dateUtils'
+import { AssignmentCard } from '../../shared/components/AssignmentCard'
 
 interface Props {
   assignments: TrackedAssignment[]
@@ -102,69 +101,7 @@ function isSubmitted(a: TrackedAssignment): boolean {
   return !!(a.submissions && (a.submissions.submitted || a.submissions.graded)) || !!a.isCompleted
 }
 
-function getTypeIcon(type: string): string {
-  if (type === 'quiz') return '📋'
-  if (type === 'discussion_topic') return '💬'
-  return '📝'
-}
 
-
-function CalendarDetailCard({
-  a,
-  courseColor,
-  isPinned,
-  onPin,
-  onRemove,
-}: {
-  a: TrackedAssignment
-  courseColor: { bg: string; text: string }
-  isPinned: boolean
-  onPin: () => void
-  onRemove: () => void
-}) {
-  const color = isOverdue(a) ? OVERDUE_COLOR : courseColor
-  return (
-    <div className={`calendar-detail-card${isPinned ? '' : ' preview'}`}>
-      <div className="calendar-detail-header" style={{ background: color.bg, color: color.text }}>
-        <span>{getTypeIcon(a.plannable_type)}</span>
-        <span className="calendar-detail-course">{a.context_name}</span>
-        <span className="calendar-detail-due">{formatExactDueDate(a.plannable.due_at ?? a.plannable_date)}</span>
-        <div className="calendar-detail-actions">
-          <button
-            className={`calendar-pin-btn${isPinned ? ' pinned' : ''}`}
-            onClick={(e) => { e.stopPropagation(); onPin() }}
-            title={isPinned ? 'Unpin' : 'Pin'}
-          >
-            📌
-          </button>
-          <button
-            className="calendar-remove-btn"
-            onClick={(e) => { e.stopPropagation(); onRemove() }}
-            title="Remove"
-          >
-            ×
-          </button>
-        </div>
-      </div>
-      <div className="calendar-detail-body">
-        <a
-          className="calendar-detail-title"
-          href={a.plannable.html_url}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {a.plannable.title}
-        </a>
-        <div className="calendar-detail-footer">
-          <StatusBadge submissions={a.submissions} />
-          {a.plannable.points_possible != null && (
-            <span className="calendar-detail-points">{a.plannable.points_possible} pts</span>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export function Calendar({ assignments }: Props) {
   const today = new Date()
@@ -478,9 +415,9 @@ export function Calendar({ assignments }: Props) {
             </div>
           ) : (
             sidePanelItems.map(({ a, isPinned }) => (
-              <CalendarDetailCard
+              <AssignmentCard
                 key={a.plannable_id}
-                a={a}
+                assignment={a}
                 courseColor={getCourseColor(a.course_id)}
                 isPinned={isPinned}
                 onPin={() => isPinned ? unpinAssignment(a.plannable_id) : pinAssignment(a.plannable_id)}

@@ -53,8 +53,6 @@ export function Dashboard() {
 
   const hasData = items.length > 0 || announcements.length > 0
   const assignments: TrackedAssignment[] = items.map((item) => ({ ...item, isSaved: false, savedAt: null }))
-  const noop = async () => { /* no-op in web app */ }
-
   const banner = (
     <>
       {me && !me.canvas_linked && (
@@ -78,8 +76,6 @@ export function Dashboard() {
         announcements={announcements}
         loading={loading}
         error={null}
-        onSave={noop}
-        onUnsave={noop}
         onRefresh={() => window.postMessage({ type: 'CP_REQUEST_DATA' }, window.location.origin)}
         hideHeader
         banner={banner}

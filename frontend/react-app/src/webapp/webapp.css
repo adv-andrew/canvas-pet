@@ -1053,6 +1053,36 @@ body {
   opacity: 1;
 }
 
+.calendar-complete-btn {
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 5px;
+  line-height: 1.4;
+  opacity: 0.75;
+}
+.calendar-complete-btn:hover {
+  opacity: 1;
+}
+
+.points-earned-popup {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #78350f;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  animation: points-pop 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+  pointer-events: none;
+  z-index: 10;
+}
+
 /* Preview (unpinned) card — dashed border to indicate temporary */
 .calendar-detail-card.preview {
   border-style: dashed;
@@ -1072,6 +1102,23 @@ body {
   color: #111827;
 }
 
+/* Shared AssignmentCard used in Dashboard and Calendar side panel */
+.assignment-card {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  background: white;
+}
+.assignment-card:last-child {
+  margin-bottom: 0;
+}
+.assignment-card.preview {
+  border-style: dashed;
+}
+
+/* ─── Calendar detail card (side panel only) ─────────────────── */
 /* Detail card inside side panel */
 .calendar-detail-card {
   border: 1px solid #e5e7eb;
