@@ -4,9 +4,11 @@ import {
   apiClientExtensionAuth,
   apiClientRegisterCanvasUser,
   apiClientFetchSavedIds,
+  apiClientFetchPinnedIds,
   apiClientSaveAssignment,
   apiClientUnsaveAssignment,
   apiClientCompleteAssignment,
+  apiClientSavePins,
   apiClientStoreCanvasToken,
   apiClientPushCanvasSnapshot,
   type CompleteAssignmentResponse,
@@ -20,7 +22,7 @@ async function getToken(): Promise<string> {
 }
 
 // No token needed — this endpoint bootstraps the session.
-export const apiExtensionAuth = apiClientExtensionAuth
+export { apiClientExtensionAuth as apiExtensionAuth } from './apiClient'
 
 export async function apiRegisterCanvasUser(params: {
   canvas_user_id: string
@@ -31,8 +33,12 @@ export async function apiRegisterCanvasUser(params: {
   return apiClientRegisterCanvasUser(params, await getToken())
 }
 
-export async function apiFetchSavedIds(institutionUrl: string): Promise<number[]> {
+export async function apiFetchSavedIds(institutionUrl: string) {
   return apiClientFetchSavedIds(institutionUrl, await getToken())
+}
+
+export async function apiFetchPinnedIds(institutionUrl: string): Promise<number[]> {
+  return apiClientFetchPinnedIds(institutionUrl, await getToken())
 }
 
 export async function apiSaveAssignment(
@@ -54,6 +60,10 @@ export async function apiCompleteAssignment(
   return apiClientCompleteAssignment(assignmentId, institutionUrl, await getToken())
 }
 
+export async function apiSavePins(ids: number[], institutionUrl: string): Promise<void> {
+  return apiClientSavePins(ids, institutionUrl, await getToken())
+}
+
 export async function apiStoreCanvasToken(canvasToken: string): Promise<void> {
   return apiClientStoreCanvasToken(canvasToken, await getToken())
 }
@@ -65,42 +75,64 @@ export async function apiPushCanvasSnapshot(
   return apiClientPushCanvasSnapshot(items, announcements, await getToken())
 }
 
+export interface ExtensionAuthResult {
+  savedIds: Set<number>
+  completedIds: Set<number>
+  pinnedIds: Set<number>
+}
+
 /**
  * Shared extension auth flow used by both the popup and panel.
  *
  * 1. If no session exists: calls /api/auth/canvas-signin to bootstrap one.
  * 2. If a session exists: fire-and-forgets a profile refresh.
- * 3. Returns the user's saved assignment IDs as a Set.
+ * 3. Returns the user's saved, completed, and pinned assignment IDs.
  */
 export async function runExtensionAuth(params: {
   canvasUserId: string
   instUrl: string
   displayName?: string | null
   email?: string | null
-}): Promise<Set<number>> {
+}): Promise<ExtensionAuthResult> {
   const { data: sessionData } = await supabaseExtAuth.auth.getSession()
 
+  let token: string
+
   if (sessionData.session) {
-    // The popup and panel run in separate JS contexts — signing out from the popup
-    // clears chrome.storage but leaves the panel's in-memory session stale.
-    // Refreshing the session validates it server-side and gets a fresh token.
     const { data: refreshed, error: refreshErr } = await supabaseExtAuth.auth.refreshSession()
 
     if (!refreshErr && refreshed.session) {
-      // Session still valid — fire-and-forget profile refresh and return early
+      token = refreshed.session.access_token
       void apiClientRegisterCanvasUser(
         { canvas_user_id: params.canvasUserId, institution_url: params.instUrl },
-        refreshed.session.access_token,
+        token,
       )
-      const ids = await apiClientFetchSavedIds(params.instUrl, refreshed.session.access_token)
-      return new Set(ids)
+    } else {
+      await supabaseExtAuth.auth.signOut({ scope: 'local' })
+      token = await bootstrapSession(params)
     }
-
-    // Session was invalidated (e.g., signed out from popup) — clear local state
-    await supabaseExtAuth.auth.signOut({ scope: 'local' })
+  } else {
+    token = await bootstrapSession(params)
   }
 
-  // No session or session was just cleared — bootstrap via Canvas identity
+  const [savedResult, pinnedIds] = await Promise.all([
+    apiClientFetchSavedIds(params.instUrl, token),
+    apiClientFetchPinnedIds(params.instUrl, token),
+  ])
+
+  return {
+    savedIds: new Set(savedResult.savedIds),
+    completedIds: new Set(savedResult.completedIds),
+    pinnedIds: new Set(pinnedIds),
+  }
+}
+
+async function bootstrapSession(params: {
+  canvasUserId: string
+  instUrl: string
+  displayName?: string | null
+  email?: string | null
+}): Promise<string> {
   const tokens = await apiClientExtensionAuth({
     canvas_user_id: params.canvasUserId,
     institution_url: params.instUrl,
@@ -112,8 +144,8 @@ export async function runExtensionAuth(params: {
     refresh_token: tokens.refresh_token,
   })
   if (setErr) throw new Error(setErr.message)
-
-  const token = await getToken()
-  const ids = await apiClientFetchSavedIds(params.instUrl, token)
-  return new Set(ids)
+  const { data } = await supabaseExtAuth.auth.getSession()
+  const token = data.session?.access_token
+  if (!token) throw new Error('Not authenticated after bootstrap')
+  return token
 }
