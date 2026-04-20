@@ -304,8 +304,48 @@ body {
 /* Show all toggle */
 .show-all-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding: 4px 12px 0;
+}
+
+.pin-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clear-pins-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  text-decoration: underline;
+}
+
+.clear-pins-btn:hover {
+  color: #374151;
+}
+
+.save-pins-btn {
+  background: none;
+  border: none;
+  color: #e53e3e;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  text-decoration: underline;
+}
+
+.save-pins-btn:hover {
+  color: #c53030;
+}
+
+.save-pins-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .show-all-btn {
@@ -422,6 +462,11 @@ body {
   color: #065f46;
 }
 
+.badge-completed {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
 .badge-pending {
   background: #f3f4f6;
   color: #4b5563;
@@ -475,6 +520,11 @@ body {
 .complete-btn:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.assignment-card.selected {
+  outline: 2px solid #e53e3e;
+  outline-offset: -2px;
 }
 
 .assignment-card.completed {
