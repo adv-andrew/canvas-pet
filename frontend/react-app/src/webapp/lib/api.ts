@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient'
-import { apiClientGetMe, apiClientLinkCanvas, apiClientGetCanvasSnapshot } from '../../shared/lib/apiClient'
+import { apiClientGetMe, apiClientLinkCanvas, apiClientGetCanvasSnapshot, apiClientSavePins, apiClientFetchPinnedIds } from '../../shared/lib/apiClient'
 import type { MeResponse, CanvasSnapshotResponse } from '../../shared/lib/apiClient'
 
 export type { MeResponse }
@@ -25,4 +25,12 @@ export async function apiLinkCanvas(params: {
 
 export async function apiGetCanvasSnapshot(): Promise<CanvasSnapshotResponse> {
   return apiClientGetCanvasSnapshot(await getToken())
+}
+
+export async function apiWebSavePins(ids: number[], institutionUrl: string): Promise<void> {
+  return apiClientSavePins(ids, institutionUrl, await getToken())
+}
+
+export async function apiWebFetchPinnedIds(institutionUrl: string): Promise<number[]> {
+  return apiClientFetchPinnedIds(institutionUrl, await getToken())
 }

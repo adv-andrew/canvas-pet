@@ -40,15 +40,76 @@ export async function apiClientRegisterCanvasUser(
   }
 }
 
-export async function apiClientFetchSavedIds(institutionUrl: string, token: string): Promise<number[]> {
+export interface SavedIdsResult {
+  savedIds: number[]
+  completedIds: number[]
+}
+
+export async function apiClientFetchSavedIds(institutionUrl: string, token: string): Promise<SavedIdsResult> {
   const url = `${BACKEND_URL}/api/assignments?institution_url=${encodeURIComponent(institutionUrl)}`
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
   if (!res.ok) {
     const { error } = (await res.json()) as { error: string }
     throw new Error(error)
   }
-  const { data } = (await res.json()) as { data: Array<{ assignment_id: number }> }
-  return data.map((r) => r.assignment_id)
+  const { data } = (await res.json()) as { data: Array<{ assignment_id: number; completed_at: string | null }> }
+  return {
+    savedIds: data.map((r) => r.assignment_id),
+    completedIds: data.filter((r) => r.completed_at != null).map((r) => r.assignment_id),
+  }
+}
+
+export async function apiClientFetchPinnedIds(institutionUrl: string, token: string): Promise<number[]> {
+  const url = `${BACKEND_URL}/api/assignments/pinned?institution_url=${encodeURIComponent(institutionUrl)}`
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
+  const { data } = (await res.json()) as { data: number[] }
+  return data
+}
+
+export async function apiClientPinAssignment(
+  assignmentId: number,
+  institutionUrl: string,
+  token: string,
+): Promise<void> {
+  const url = `${BACKEND_URL}/api/assignments/${assignmentId}/pin?institution_url=${encodeURIComponent(institutionUrl)}`
+  const res = await fetch(url, { method: 'POST', headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
+}
+
+export async function apiClientSavePins(
+  ids: number[],
+  institutionUrl: string,
+  token: string,
+): Promise<void> {
+  const res = await fetch(`${BACKEND_URL}/api/assignments/pinned`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ ids, institution_url: institutionUrl }),
+  })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
+}
+
+export async function apiClientUnpinAssignment(
+  assignmentId: number,
+  institutionUrl: string,
+  token: string,
+): Promise<void> {
+  const url = `${BACKEND_URL}/api/assignments/${assignmentId}/pin?institution_url=${encodeURIComponent(institutionUrl)}`
+  const res = await fetch(url, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) {
+    const { error } = (await res.json()) as { error: string }
+    throw new Error(error)
+  }
 }
 
 export async function apiClientSaveAssignment(
