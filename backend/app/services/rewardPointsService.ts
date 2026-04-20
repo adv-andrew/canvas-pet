@@ -13,43 +13,45 @@ export function calculateAward(
     const daysEarly = (due - done) / msPerDay
     if (daysEarly >= 2) base = 15
     else if (daysEarly >= 1) base = 10
-    else if (daysEarly >= 0) base = 5
-    else return 0 // late
+    else if (daysEarly < 0) return 0 // late
   }
   return base + Math.min(streak, 10)
 }
 
+// canvasUsersId must be canvas_users.id (the PK), not the Supabase Auth UID.
+// Callers are responsible for resolving the PK first via .or('id.eq.X,web_user_id.eq.X').
+
 export async function awardPoints(
-  supabaseUserId: string,
+  canvasUsersId: string,
   amount: number,
 ): Promise<void> {
   if (amount <= 0) return
   const { data } = await getSupabaseAdmin()
     .from('canvas_users')
     .select('reward_points')
-    .eq('id', supabaseUserId)
+    .eq('id', canvasUsersId)
     .single()
   const current = data?.reward_points ?? 0
   await getSupabaseAdmin()
     .from('canvas_users')
     .update({ reward_points: current + amount })
-    .eq('id', supabaseUserId)
+    .eq('id', canvasUsersId)
 }
 
 export async function deductPoints(
-  supabaseUserId: string,
+  canvasUsersId: string,
   amount: number,
 ): Promise<void> {
   const { data } = await getSupabaseAdmin()
     .from('canvas_users')
     .select('reward_points')
-    .eq('id', supabaseUserId)
+    .eq('id', canvasUsersId)
     .single()
   const current = data?.reward_points ?? 0
   if (current < amount) throw new Error('Insufficient points')
   const { error } = await getSupabaseAdmin()
     .from('canvas_users')
     .update({ reward_points: current - amount })
-    .eq('id', supabaseUserId)
-  if (error) throw new Error('Insufficient points')
+    .eq('id', canvasUsersId)
+  if (error) throw new Error(error.message)
 }
