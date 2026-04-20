@@ -38,7 +38,8 @@ export function PanelApp() {
 
   const setAndBroadcast = (m: PanelMode) => {
     setMode(m)
-    window.parent.postMessage({ type: 'SET_MODE', mode: m }, '*')
+    const parentOrigin = location.ancestorOrigins[0] ?? '*'
+    window.parent.postMessage({ type: 'SET_MODE', mode: m }, parentOrigin)
   }
 
   return (
@@ -48,6 +49,10 @@ export function PanelApp() {
         announcements={data.announcements}
         loading={data.loading}
         error={data.error}
+        pinnedIds={data.pinnedIds}
+        onTogglePin={data.togglePin}
+        onClearPins={data.clearPins}
+        onSavePins={data.savePins}
         onComplete={data.completeAssignment}
         onRefresh={data.refetch}
         onConnectApp={data.handleConnectApp}
