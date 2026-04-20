@@ -14,12 +14,41 @@ let lastSavedWidth = DEFAULT_WIDTH
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
 
 // --- Canvas data fetching (same origin) ---
+
+function getSemesterDateRange(): { startDate: string; endDate: string } {
+  const d = new Date()
+  const month = d.getMonth() // 0-indexed; Aug=7
+  const year = d.getFullYear()
+  const start = month >= 7
+    ? new Date(year, 7, 1)    // Aug 1 — fall semester start
+    : new Date(year, 0, 1)    // Jan 1 — spring semester start
+  const end = month >= 7
+    ? new Date(year, 11, 31)  // Dec 31 — fall semester end
+    : new Date(year, 6, 31)   // Jul 31 — spring semester end
+  return {
+    startDate: start.toISOString().split('T')[0],
+    endDate: end.toISOString().split('T')[0],
+  }
+}
+
 async function fetchCanvasData() {
-  const [items, user, stream] = await Promise.all([
-    fetch('/api/v1/planner/items?per_page=50&order=asc', { credentials: 'include' }).then((r) => {
-      if (!r.ok) throw new Error(`Canvas API error: ${r.status}`)
-      return r.json()
-    }),
+  const { startDate, endDate } = getSemesterDateRange()
+  const today = new Date().toISOString().split('T')[0]
+
+  // Canvas caps per_page at 50. Fetching the full semester in one ascending request
+  // fills all 50 slots with past items before any upcoming ones appear.
+  // Two requests guarantee both past (most recent 50) and upcoming (next 50) are present.
+  const plannerFetch = (params: string) =>
+    fetch(`/api/v1/planner/items?per_page=50&${params}`, { credentials: 'include' }).then((r) => {
+      if (!r.ok) throw new Error(`Canvas planner error: ${r.status}`)
+      return r.json() as Promise<unknown[]>
+    })
+
+  const [pastItems, upcomingItems, user, stream] = await Promise.all([
+    // Most recent 50 past items — desc so Canvas gives us the closest-to-today ones first
+    plannerFetch(`order=desc&start_date=${startDate}&end_date=${today}`),
+    // Next 50 upcoming items from today onwards
+    plannerFetch(`order=asc&start_date=${today}&end_date=${endDate}`),
     fetch('/api/v1/users/self', { credentials: 'include' }).then((r) => {
       if (!r.ok) throw new Error(`Canvas API error: ${r.status}`)
       return r.json()
@@ -33,8 +62,30 @@ async function fetchCanvasData() {
   ])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const announcements = (stream as any[]).filter((a) => a.type === 'Announcement')
+
+  // Merge past (reversed to restore chronological order) + upcoming, deduplicating
+  // items that fall on today and therefore appear in both fetches.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const seenIds = new Set<number>()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mergedItems: unknown[] = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const item of [...(pastItems as any[]).reverse(), ...(upcomingItems as any[])]) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const id = (item as any).plannable_id
+    if (!seenIds.has(id)) {
+      seenIds.add(id)
+      mergedItems.push(item)
+    }
+  }
+
+  console.log(`[CP] past:${(pastItems as any[]).length} upcoming:${(upcomingItems as any[]).length} merged:${mergedItems.length}`)
+
+  // Strip planner items that are announcement-type — those belong in the announcements tab.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const filteredItems = mergedItems.filter((item: any) => item.plannable_type !== 'announcement')
   const data = {
-    items,
+    items: filteredItems,
     announcements,
     userId: String((user as { id: number }).id),
     institutionUrl: window.location.origin,

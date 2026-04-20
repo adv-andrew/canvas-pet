@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'rea
 import { supabase } from './lib/supabaseClient'
 import { apiClientGetPetStats } from '../shared/lib/apiClient'
 import { NavBar } from './components/NavBar'
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string
 import { SignIn } from './pages/SignIn'
 import { Home } from './pages/Home'
 import { Dashboard } from './pages/Dashboard'
@@ -40,18 +42,20 @@ function ProtectedLayout() {
   const navigate = useNavigate()
   const [checking, setChecking] = useState(true)
   const [rewardPoints, setRewardPoints] = useState(0)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) {
         navigate('/sign-in', { replace: true })
       } else {
-        try {
-          const stats = await apiClientGetPetStats(data.session.access_token)
-          setRewardPoints(stats.reward_points)
-        } catch {
-          // Ignore — user may not have canvas linked yet
-        }
+        const token = data.session.access_token
+        const [stats, adminRes] = await Promise.allSettled([
+          apiClientGetPetStats(token),
+          fetch(`${BACKEND_URL}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
+        ])
+        if (stats.status === 'fulfilled') setRewardPoints(stats.value.reward_points)
+        if (adminRes.status === 'fulfilled' && adminRes.value.ok) setIsAdmin(true)
         setChecking(false)
       }
     })
@@ -67,7 +71,7 @@ function ProtectedLayout() {
 
   return (
     <>
-      <NavBar rewardPoints={rewardPoints} />
+      <NavBar rewardPoints={rewardPoints} isAdmin={isAdmin} />
       <Outlet />
     </>
   )
