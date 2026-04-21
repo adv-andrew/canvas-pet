@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { ThemeProvider } from '../shared/lib/themeContext'
 import { supabase } from './lib/supabaseClient'
 import { apiClientGetPetStats } from '../shared/lib/apiClient'
 import { NavBar } from './components/NavBar'
+import { RefreshPetStatsContext } from './lib/petStatsContext'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string
 import { SignIn } from './pages/SignIn'
@@ -42,8 +43,7 @@ function AuthCallback() {
 function ProtectedLayout() {
   const navigate = useNavigate()
   const [checking, setChecking] = useState(true)
-  const [rewardPoints, setRewardPoints] = useState(0)
-  const [happiness, setHappiness] = useState(0)
+  const [petStats, setPetStats] = useState({ happiness_score: 0, streak: 0, reward_points: 0 })
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
@@ -56,15 +56,21 @@ function ProtectedLayout() {
           apiClientGetPetStats(token),
           fetch(`${BACKEND_URL}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
         ])
-        if (stats.status === 'fulfilled') {
-          setRewardPoints(stats.value.reward_points)
-          setHappiness(stats.value.happiness_score)
-        }
+        if (stats.status === 'fulfilled') setPetStats(stats.value)
         if (adminRes.status === 'fulfilled' && adminRes.value.ok) setIsAdmin(true)
         setChecking(false)
       }
     })
   }, [navigate])
+
+  const refresh = useCallback(async () => {
+    const { data } = await supabase.auth.getSession()
+    if (!data.session) return
+    const stats = await apiClientGetPetStats(data.session.access_token)
+    setPetStats(stats)
+  }, [])
+
+  const ctxValue = useMemo(() => ({ stats: petStats, refresh, updateStats: setPetStats }), [petStats, refresh])
 
   if (checking) {
     return (
@@ -75,10 +81,10 @@ function ProtectedLayout() {
   }
 
   return (
-    <>
-      <NavBar rewardPoints={rewardPoints} happiness={happiness} isAdmin={isAdmin} />
+    <RefreshPetStatsContext.Provider value={ctxValue}>
+      <NavBar rewardPoints={petStats.reward_points} happiness={petStats.happiness_score} isAdmin={isAdmin} />
       <Outlet />
-    </>
+    </RefreshPetStatsContext.Provider>
   )
 }
 

@@ -3,19 +3,21 @@ import {
   apiClientGetShopItems,
   apiClientGetOwnedItems,
   apiClientPurchaseItem,
-  apiClientGetPetStats,
   type ShopItem,
   type OwnedItem,
 } from '../../shared/lib/apiClient'
 import { supabase } from '../lib/supabaseClient'
+import { usePetStats } from '../lib/petStatsContext'
 
 type Tab = 'shop' | 'owned'
 
 export function Shop() {
+  const { stats, updateStats } = usePetStats()
+  const balance = stats?.reward_points ?? 0
+
   const [tab, setTab] = useState<Tab>('shop')
   const [items, setItems] = useState<ShopItem[]>([])
   const [owned, setOwned] = useState<OwnedItem[]>([])
-  const [balance, setBalance] = useState(0)
   const [loading, setLoading] = useState(true)
   const [purchasing, setPurchasing] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -30,15 +32,13 @@ export function Shop() {
         if (!session) return
         const token = session.access_token
 
-        const [shopItems, ownedItems, stats] = await Promise.all([
+        const [shopItems, ownedItems] = await Promise.all([
           apiClientGetShopItems(token),
           apiClientGetOwnedItems(token),
-          apiClientGetPetStats(token),
         ])
 
         setItems(shopItems)
         setOwned(ownedItems)
-        setBalance(stats.reward_points)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load')
       } finally {
@@ -69,7 +69,7 @@ export function Shop() {
       if (!session) throw new Error('Not authenticated')
 
       const result = await apiClientPurchaseItem(itemId, session.access_token)
-      setBalance(result.reward_points)
+      updateStats({ happiness_score: stats?.happiness_score ?? 0, streak: stats?.streak ?? 0, reward_points: result.reward_points })
 
       const ownedItems = await apiClientGetOwnedItems(session.access_token)
       setOwned(ownedItems)

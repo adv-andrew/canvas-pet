@@ -1,44 +1,8 @@
-import { useEffect, useState } from 'react'
 import { PixelPet } from '../../shared/components/PixelPet'
-import { apiClientGetPetStats, type PetStats } from '../../shared/lib/apiClient'
-import { supabase } from '../lib/supabaseClient'
+import { usePetStats } from '../lib/petStatsContext'
 
 export function Home() {
-  const [stats, setStats] = useState<PetStats | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) return
-        const data = await apiClientGetPetStats(session.access_token)
-        setStats(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load')
-      } finally {
-        setLoading(false)
-      }
-    }
-    void load()
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="page-loading">
-        <div className="spinner" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="page-content">
-        <div className="home-error">{error}</div>
-      </div>
-    )
-  }
+  const { stats } = usePetStats()
 
   const happiness = stats?.happiness_score ?? 50
   const streak = stats?.streak ?? 0
@@ -67,7 +31,7 @@ export function Home() {
           <div className="stat-icon">🔥</div>
           <div className="stat-info">
             <div className="stat-value">{streak}</div>
-            <div className="stat-label">{streak === 1 ? 'Day Streak' : 'Day Streak'}</div>
+            <div className="stat-label">Day Streak</div>
           </div>
         </div>
 
