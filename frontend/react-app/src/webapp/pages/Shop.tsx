@@ -19,6 +19,9 @@ export function Shop() {
   const [loading, setLoading] = useState(true)
   const [purchasing, setPurchasing] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [costSort, setCostSort] = useState<'default' | 'low-high' | 'high-low'>('default')
+  const [onlyAffordable, setOnlyAffordable] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -46,6 +49,17 @@ export function Shop() {
   }, [])
 
   const ownedIds = new Set(owned.map((o) => o.item_id))
+
+  const displayedItems = [...items]
+    .filter((item) =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter((item) => !onlyAffordable || item.cost <= balance)
+    .sort((a, b) => {
+      if (costSort === 'low-high') return a.cost - b.cost
+      if (costSort === 'high-low') return b.cost - a.cost
+      return 0
+    })
 
   const handlePurchase = async (itemId: string) => {
     setPurchasing(itemId)
@@ -104,11 +118,47 @@ export function Shop() {
       </div>
 
       {tab === 'shop' && (
-        <div className="shop-grid">
-          {items.length === 0 && (
-            <div className="shop-empty">No items available yet. Check back soon!</div>
+        <>
+          <div className="shop-controls">
+            <input
+              type="text"
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="shop-search"
+            />
+
+            <select
+              value={costSort}
+              onChange={(e) =>
+                setCostSort(e.target.value as 'default' | 'low-high' | 'high-low')
+              }
+              className="shop-sort"
+            >
+              <option value="default">Sort by</option>
+              <option value="low-high">Cost: Low to High</option>
+              <option value="high-low">Cost: High to Low</option>
+            </select>
+
+            <label className="shop-checkbox">
+              <input
+                type="checkbox"
+                checked={onlyAffordable}
+                onChange={(e) => setOnlyAffordable(e.target.checked)}
+              />
+              Only affordable
+            </label>
+          </div>
+        </>
+      )}
+
+          <div className="shop-grid">
+          {displayedItems.length === 0 && (
+            <div className="shop-empty">
+              No matching items found.
+            </div>
           )}
-          {items.map((item) => {
+          {displayedItems.map((item) => {
             const isOwned = ownedIds.has(item.id)
             const canAfford = balance >= item.cost
             const isPurchasing = purchasing === item.id
@@ -145,7 +195,6 @@ export function Shop() {
             )
           })}
         </div>
-      )}
 
       {tab === 'owned' && (
         <div className="shop-grid">
