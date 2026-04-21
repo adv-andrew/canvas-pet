@@ -53,13 +53,19 @@ export async function completeAssignment(
 ) {
   const { data, error } = await getSupabaseAdmin()
     .from('saved_assignments')
-    .update({ completed_at: new Date().toISOString() })
-    .eq('canvas_user_id', canvasUserId)
-    .eq('institution_url', institutionUrl)
-    .eq('assignment_id', assignmentId)
-    .select()
+    .upsert(
+      {
+        canvas_user_id: canvasUserId,
+        institution_url: institutionUrl,
+        assignment_id: assignmentId,
+        plannable_type: 'assignment',
+        completed_at: new Date().toISOString(),
+      },
+      { onConflict: 'canvas_user_id,institution_url,assignment_id' },
+    )
+    .select('due_date, completed_at')
     .single()
-  if (error || !data) throw new Error('Assignment not found or not saved')
+  if (error || !data) throw new Error('Failed to complete assignment')
   return data as { due_date: string | null; completed_at: string }
 }
 

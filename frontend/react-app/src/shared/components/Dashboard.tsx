@@ -362,11 +362,11 @@ export function Dashboard({
                   ))}
                 </section>
               )}
+              <GroupSection title="Past Due" items={groups.overdue} pinnedIds={pinnedIds} selectedId={selectedId} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
               <GroupSection title="Today" items={groups.dueToday} pinnedIds={pinnedIds} selectedId={selectedId} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
               <GroupSection title="This Week" items={groups.thisWeek} pinnedIds={pinnedIds} selectedId={selectedId} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
               <GroupSection title="This Month" items={groups.thisMonth} pinnedIds={pinnedIds} selectedId={selectedId} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
               <GroupSection title="Later" items={groups.later} pinnedIds={pinnedIds} selectedId={selectedId} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
-              <GroupSection title="Past Due" items={groups.overdue} pinnedIds={pinnedIds} selectedId={selectedId} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
             </>
           )}
         </>

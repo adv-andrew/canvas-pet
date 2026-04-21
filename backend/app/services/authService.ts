@@ -99,11 +99,20 @@ export async function storeCanvasToken(
 export async function getCanvasUserIdForAuthUser(
   supabaseAuthUserId: string,
 ): Promise<string> {
-  const { data, error } = await getSupabaseAdmin()
+  // Extension users: canvas_users.id = their Supabase auth user ID
+  const { data: direct } = await getSupabaseAdmin()
     .from('canvas_users')
     .select('canvas_user_id')
     .eq('id', supabaseAuthUserId)
-    .single()
-  if (error || !data) throw new Error('Canvas user not found — call POST /api/auth first')
-  return data.canvas_user_id as string
+    .maybeSingle()
+  if (direct) return direct.canvas_user_id as string
+
+  // Web app users: canvas_users.web_user_id = their Supabase auth user ID
+  const { data: linked, error } = await getSupabaseAdmin()
+    .from('canvas_users')
+    .select('canvas_user_id')
+    .eq('web_user_id', supabaseAuthUserId)
+    .maybeSingle()
+  if (error || !linked) throw new Error('Canvas user not found — call POST /api/auth first')
+  return linked.canvas_user_id as string
 }
