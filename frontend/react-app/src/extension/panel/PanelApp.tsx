@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { ThemeProvider } from '../../shared/lib/themeContext'
 import { Dashboard } from '../../shared/components/Dashboard'
 import { usePanelData } from './hooks/usePanelData'
 
@@ -43,6 +44,7 @@ export function PanelApp() {
   }
 
   return (
+    <ThemeProvider>
     <div className="cp-panel">
       <Dashboard
         showTopPet={true}
@@ -67,5 +69,6 @@ export function PanelApp() {
         isFullscreen={mode === 'fullscreen'}
       />
     </div>
+    </ThemeProvider>
   )
 }

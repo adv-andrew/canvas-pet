@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabaseAuth } from './lib/supabaseAuthClient'
+import { ThemeProvider } from '../../shared/lib/themeContext'
 import { AccountSettings } from '../../shared/components/AccountSettings'
 import { AccessTokenPrompt } from '../../shared/components/AccessTokenPrompt'
 import { apiClientGetMe, apiClientStoreCanvasToken } from '../../shared/lib/apiClient'
@@ -59,7 +60,7 @@ export function App() {
   }
 
   return (
-    <>
+    <ThemeProvider>
       <header className="popup-header">
         <h1>Canvas Pet</h1>
         <span className="popup-header-subtitle">Account Settings</span>
@@ -72,6 +73,6 @@ export function App() {
         />
       )}
       <AccountSettings supabaseClient={supabaseAuth} onSignOut={handleSignOut} hideTitle hideAuthSections />
-    </>
+    </ThemeProvider>
   )
 }

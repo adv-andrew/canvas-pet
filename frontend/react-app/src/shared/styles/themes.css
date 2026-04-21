@@ -1,0 +1,84 @@
+/* Crimson default — used by extension popup/panel which never sets data-theme */
+:root {
+  --cp-primary: #c53030;
+  --cp-primary-dark: #a82828;
+  --cp-primary-darker: #9b2424;
+  --cp-primary-light: #fc8181;
+  --cp-primary-faint: #fff5f5;
+  --cp-primary-faint-border: #fecaca;
+  --cp-pet-body: #dc2626;
+  --cp-pet-body-light: #fc8181;
+  --cp-pet-body-dark: #9b1c1c;
+}
+
+[data-theme="crimson"] {
+  --cp-primary: #c53030;
+  --cp-primary-dark: #a82828;
+  --cp-primary-darker: #9b2424;
+  --cp-primary-light: #fc8181;
+  --cp-primary-faint: #fff5f5;
+  --cp-primary-faint-border: #fecaca;
+  --cp-pet-body: #dc2626;
+  --cp-pet-body-light: #fc8181;
+  --cp-pet-body-dark: #9b1c1c;
+}
+
+[data-theme="violet"] {
+  --cp-primary: #7c3aed;
+  --cp-primary-dark: #6d28d9;
+  --cp-primary-darker: #5b21b6;
+  --cp-primary-light: #a78bfa;
+  --cp-primary-faint: #faf5ff;
+  --cp-primary-faint-border: #e9d5ff;
+  --cp-pet-body: #7c3aed;
+  --cp-pet-body-light: #a78bfa;
+  --cp-pet-body-dark: #5b21b6;
+}
+
+[data-theme="ocean"] {
+  --cp-primary: #0369a1;
+  --cp-primary-dark: #075985;
+  --cp-primary-darker: #0c4a6e;
+  --cp-primary-light: #38bdf8;
+  --cp-primary-faint: #f0f9ff;
+  --cp-primary-faint-border: #bae6fd;
+  --cp-pet-body: #0ea5e9;
+  --cp-pet-body-light: #38bdf8;
+  --cp-pet-body-dark: #0369a1;
+}
+
+[data-theme="forest"] {
+  --cp-primary: #166534;
+  --cp-primary-dark: #14532d;
+  --cp-primary-darker: #052e16;
+  --cp-primary-light: #4ade80;
+  --cp-primary-faint: #f0fdf4;
+  --cp-primary-faint-border: #bbf7d0;
+  --cp-pet-body: #16a34a;
+  --cp-pet-body-light: #4ade80;
+  --cp-pet-body-dark: #166534;
+}
+
+[data-theme="sunset"] {
+  --cp-primary: #b45309;
+  --cp-primary-dark: #92400e;
+  --cp-primary-darker: #78350f;
+  --cp-primary-light: #fbbf24;
+  --cp-primary-faint: #fffbeb;
+  --cp-primary-faint-border: #fde68a;
+  --cp-pet-body: #d97706;
+  --cp-pet-body-light: #fbbf24;
+  --cp-pet-body-dark: #b45309;
+}
+
+[data-theme="rose"] {
+  --cp-primary: #be185d;
+  --cp-primary-dark: #9d174d;
+  --cp-primary-darker: #831843;
+  --cp-primary-light: #f9a8d4;
+  --cp-primary-faint: #fdf2f8;
+  --cp-primary-faint-border: #fbcfe8;
+  --cp-pet-body: #ec4899;
+  --cp-pet-body-light: #f9a8d4;
+  --cp-pet-body-dark: #be185d;
+}

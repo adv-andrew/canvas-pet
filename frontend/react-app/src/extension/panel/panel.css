@@ -18,7 +18,7 @@ body {
 }
 
 .extension-pet-section {
-  background: linear-gradient(180deg, #f7f3ff 0%, #f4f4f5 100%);
+  background: linear-gradient(180deg, var(--cp-primary-faint) 0%, #f4f4f5 100%);
   padding: 20px 16px 18px;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -43,7 +43,7 @@ body {
 .extension-pet-mood-label {
   font-size: 18px;
   font-weight: 700;
-  color: #7c3aed;
+  color: var(--cp-primary);
   margin: 0;
 }
 
@@ -56,7 +56,7 @@ body {
 
 .extension-pet-stat-card {
   background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #ddd6fe;
+  border: 1px solid var(--cp-primary-faint-border);
   border-radius: 16px;
   padding: 14px 10px;
   display: flex;
@@ -65,7 +65,7 @@ body {
   justify-content: center;
   text-align: center;
   min-height: 120px;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .extension-pet-stat-icon {
@@ -89,7 +89,11 @@ body {
 }
 
 .extension-pet-stat-happiness .extension-pet-stat-value {
-  color: #7c3aed;
+  color: #ef4444;
+}
+
+.extension-pet-stat-happiness .extension-pet-stat-bar-fill {
+  background: linear-gradient(90deg, #ef4444, #fca5a5);
 }
 
 .extension-pet-stat-streak .extension-pet-stat-value {
@@ -111,7 +115,7 @@ body {
 
 .extension-pet-stat-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(90deg, var(--cp-primary-light) 0%, var(--cp-primary) 100%);
   border-radius: 999px;
 }
 

@@ -300,7 +300,7 @@ export function Dashboard({
 
           <div className="extension-pet-stats-grid">
             <div className="extension-pet-stat-card extension-pet-stat-happiness">
-              <div className="extension-pet-stat-icon">💜</div>
+              <div className="extension-pet-stat-icon">❤️</div>
               <div className="extension-pet-stat-value">{petHappiness}%</div>
               <div className="extension-pet-stat-label">HAPPINESS</div>
               <div className="extension-pet-stat-bar">

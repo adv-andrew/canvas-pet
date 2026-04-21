@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { useTheme } from '../lib/themeContext'
+import { THEMES } from '../lib/themes'
 
 const WEBAPP_URL = import.meta.env.VITE_WEBAPP_URL as string
 
@@ -17,6 +19,7 @@ interface Props {
 }
 
 export function AccountSettings({ supabaseClient, onSignOut, hideTitle, hideAuthSections }: Props) {
+  const { theme, setTheme } = useTheme()
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [linkedProviders, setLinkedProviders] = useState<string[]>([])
 
@@ -165,6 +168,27 @@ export function AccountSettings({ supabaseClient, onSignOut, hideTitle, hideAuth
           </div>
         </div>
       )}
+
+      <div className="account-sections account-theme-section">
+        <div className="account-section">
+          <div className="account-section-info">
+            <p className="account-section-title">Color Theme</p>
+            <p className="account-section-desc">Choose your app's color palette.</p>
+          </div>
+          <div className="theme-swatches">
+            {THEMES.map(t => (
+              <button
+                key={t.id}
+                className={`theme-swatch${theme === t.id ? ' active' : ''}`}
+                style={{ background: t.preview }}
+                onClick={() => setTheme(t.id)}
+                title={t.label}
+                aria-label={t.label}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
 
       <div className="account-signout">
         <button className="account-signout-btn" onClick={onSignOut}>

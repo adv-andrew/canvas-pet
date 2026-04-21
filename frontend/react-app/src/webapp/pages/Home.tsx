@@ -53,7 +53,7 @@ export function Home() {
 
       <div className="stats-grid">
         <div className="stat-card stat-happiness">
-          <div className="stat-icon">💜</div>
+          <div className="stat-icon">❤️</div>
           <div className="stat-info">
             <div className="stat-value">{happiness}%</div>
             <div className="stat-label">Happiness</div>
