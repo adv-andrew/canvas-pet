@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type React from 'react'
-import type { TrackedAssignment, CanvasPlannerItem, CanvasAnnouncement, ConnectAppState } from '../types/canvas'
+import type { TrackedAssignment, CanvasAnnouncement, ConnectAppState } from '../types/canvas'
 import { AssignmentCard } from './AssignmentCard'
 import { AnnouncementCard } from './AnnouncementCard'
 import { AccessTokenPrompt } from './AccessTokenPrompt'
@@ -10,8 +10,6 @@ interface Props {
   announcements: CanvasAnnouncement[]
   loading: boolean
   error: string | null
-  onSave: (item: CanvasPlannerItem) => Promise<void>
-  onUnsave: (id: number) => Promise<void>
   onComplete?: (id: number) => Promise<{ points_earned: number } | void>
   onRefresh: () => void
   onConnectApp?: () => void
@@ -28,15 +26,20 @@ interface Props {
 
 const OVERDUE_CUTOFF_DAYS = 30
 
-function applyDefaultWindow(items: TrackedAssignment[], showAll: boolean): TrackedAssignment[] {
+function isSubmitted(item: TrackedAssignment): boolean {
+  return item.submissions !== false && item.submissions.submitted
+}
+
+function applyFilters(items: TrackedAssignment[], showAll: boolean): TrackedAssignment[] {
   if (showAll) return items
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - OVERDUE_CUTOFF_DAYS)
   cutoff.setHours(0, 0, 0, 0)
   return items.filter((item) => {
+    if (isSubmitted(item)) return false
     const dueAt = item.plannable.due_at ?? item.plannable_date
-    if (!dueAt) return true
-    return new Date(dueAt) >= cutoff
+    if (dueAt && new Date(dueAt) < cutoff) return false
+    return true
   })
 }
 
@@ -52,7 +55,6 @@ function groupAssignments(items: TrackedAssignment[]) {
   const later: TrackedAssignment[] = []
 
   for (const item of items) {
-    // Fall back to plannable_date so items without a due_at are still grouped correctly
     const dueAt = item.plannable.due_at ?? item.plannable_date
     if (!dueAt) {
       later.push(item)
@@ -67,36 +69,61 @@ function groupAssignments(items: TrackedAssignment[]) {
     else later.push(item)
   }
 
+  overdue.sort((a, b) => {
+    const aMs = new Date(a.plannable.due_at ?? a.plannable_date ?? '').getTime()
+    const bMs = new Date(b.plannable.due_at ?? b.plannable_date ?? '').getTime()
+    return bMs - aMs
+  })
+
   return { overdue, dueToday, thisWeek, later }
 }
 
 interface GroupSectionProps {
   title: string
   items: TrackedAssignment[]
-  onSave: (item: CanvasPlannerItem) => Promise<void>
-  onUnsave: (id: number) => Promise<void>
+  pinnedIds: Set<number>
+  onPin: (id: number) => void
   onComplete?: (id: number) => Promise<{ points_earned: number } | void>
 }
 
-function GroupSection({ title, items, onSave, onUnsave, onComplete }: GroupSectionProps) {
+function GroupSection({ title, items, pinnedIds, onPin, onComplete }: Readonly<GroupSectionProps>) {
   if (items.length === 0) return null
   return (
     <section className="group-section">
       <h3 className="group-title">{title}</h3>
       {items.map((a) => (
-        <AssignmentCard key={a.plannable_id} assignment={a} onSave={onSave} onUnsave={onUnsave} onComplete={onComplete} />
+        <AssignmentCard
+          key={a.plannable_id}
+          assignment={a}
+          isPinned={pinnedIds.has(a.plannable_id)}
+          onPin={() => onPin(a.plannable_id)}
+          onComplete={onComplete}
+        />
       ))}
     </section>
   )
 }
 
-export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onComplete, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onDismissLongAccess, onFullscreen, onMinimize, isFullscreen, hideHeader, banner }: Props) {
+export function Dashboard({ assignments, announcements, loading, error, onComplete, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onDismissLongAccess, onFullscreen, onMinimize, isFullscreen, hideHeader, banner }: Readonly<Props>) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
   const [showAll, setShowAll] = useState(false)
+  const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set())
 
-  const visibleAssignments = applyDefaultWindow(assignments, showAll)
-  const groups = groupAssignments(visibleAssignments)
-  const hasAssignments = Object.values(groups).some((g) => g.length > 0)
+  const togglePin = (id: number) => {
+    setPinnedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const visibleAssignments = applyFilters(assignments, showAll)
+  const unpinnedVisible = visibleAssignments.filter((a) => !pinnedIds.has(a.plannable_id))
+  const groups = groupAssignments(unpinnedVisible)
+  const pinnedAssignments = assignments.filter((a) => pinnedIds.has(a.plannable_id))
+  const hasAssignments = pinnedAssignments.length > 0 || Object.values(groups).some((g) => g.length > 0)
+  const pendingCount = assignments.filter((a) => !isSubmitted(a)).length
 
   return (
     <div className="dashboard">
@@ -160,8 +187,8 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
           onClick={() => setActiveTab('assignments')}
         >
           Assignments
-          {assignments.length > 0 && (
-            <span className="tab-count">{assignments.length}</span>
+          {pendingCount > 0 && (
+            <span className="tab-count">{pendingCount}</span>
           )}
         </button>
         <button
@@ -203,10 +230,24 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
           )}
           {hasAssignments && (
             <>
-              <GroupSection title="Overdue" items={groups.overdue} onSave={onSave} onUnsave={onUnsave} onComplete={onComplete} />
-              <GroupSection title="Today" items={groups.dueToday} onSave={onSave} onUnsave={onUnsave} onComplete={onComplete} />
-              <GroupSection title="This Week" items={groups.thisWeek} onSave={onSave} onUnsave={onUnsave} onComplete={onComplete} />
-              <GroupSection title="Later" items={groups.later} onSave={onSave} onUnsave={onUnsave} onComplete={onComplete} />
+              {pinnedAssignments.length > 0 && (
+                <section className="group-section">
+                  <h3 className="group-title">📌 Pinned</h3>
+                  {pinnedAssignments.map((a) => (
+                    <AssignmentCard
+                      key={a.plannable_id}
+                      assignment={a}
+                      isPinned={true}
+                      onPin={() => togglePin(a.plannable_id)}
+                      onComplete={onComplete}
+                    />
+                  ))}
+                </section>
+              )}
+              <GroupSection title="Today" items={groups.dueToday} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
+              <GroupSection title="This Week" items={groups.thisWeek} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
+              <GroupSection title="Later" items={groups.later} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
+              <GroupSection title="Past Due" items={groups.overdue} pinnedIds={pinnedIds} onPin={togglePin} onComplete={onComplete} />
             </>
           )}
         </>
