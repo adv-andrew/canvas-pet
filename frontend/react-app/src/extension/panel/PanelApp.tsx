@@ -49,11 +49,8 @@ export function PanelApp() {
         announcements={data.announcements}
         loading={data.loading}
         error={data.error}
-        pinnedIds={data.pinnedIds}
-        onTogglePin={data.togglePin}
-        onClearPins={data.clearPins}
-        onSavePins={data.savePins}
-        onComplete={data.completeAssignment}
+        onSave={data.saveAssignment}
+        onUnsave={data.unsaveAssignment}
         onRefresh={data.refetch}
         onConnectApp={data.handleConnectApp}
         onConnectAppWithPassword={data.handleConnectAppWithPassword}
