@@ -73,9 +73,7 @@ async function fetchCanvasData() {
 
   // Merge past (reversed to restore chronological order) + upcoming, deduplicating
   // items that fall on today and therefore appear in both fetches.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const seenIds = new Set<number>()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mergedItems: unknown[] = []
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const item of [...(pastItems as any[]).reverse(), ...(upcomingItems as any[])]) {
@@ -87,6 +85,7 @@ async function fetchCanvasData() {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   console.log(`[CP] past:${(pastItems as any[]).length} upcoming:${(upcomingItems as any[]).length} merged:${mergedItems.length}`)
 
   // Strip announcement-type planner items and ensure every item has an absolute html_url.
@@ -94,7 +93,6 @@ async function fetchCanvasData() {
   // in either case we construct a canonical absolute URL from the known course/item IDs.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const filteredItems = mergedItems.filter((item: any) => item.plannable_type !== 'announcement').map((item: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let url: string | undefined = item.plannable?.html_url
     if (url && !url.startsWith('http')) {
       url = `${origin}${url}`

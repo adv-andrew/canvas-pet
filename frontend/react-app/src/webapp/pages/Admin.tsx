@@ -89,6 +89,7 @@ export function Admin() {
     }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     checkAdmin().then((admin) => {
       if (admin) {
