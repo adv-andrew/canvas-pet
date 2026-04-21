@@ -148,11 +148,17 @@ export function usePanelData(): PanelDataResult {
   const completeAssignment = useCallback(
     async (assignmentId: number): Promise<{ points_earned: number } | void> => {
       if (!institutionUrl) return
-      const result = await apiCompleteAssignment(assignmentId, institutionUrl)
+      const dueDate = rawItems.find((i) => i.plannable_id === assignmentId)?.plannable.due_at ?? null
+      const result = await apiCompleteAssignment(assignmentId, institutionUrl, dueDate)
       setCompletedIds((prev) => new Set([...prev, assignmentId]))
+      setPetStats({
+        happiness_score: result.happiness_score,
+        streak: result.streak,
+        reward_points: result.reward_points,
+      })
       return { points_earned: result.points_earned }
     },
-    [institutionUrl],
+    [institutionUrl, rawItems],
   )
 
   const togglePin = useCallback((assignmentId: number) => {

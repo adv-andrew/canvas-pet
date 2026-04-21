@@ -56,8 +56,9 @@ export async function apiUnsaveAssignment(assignmentId: number, institutionUrl: 
 export async function apiCompleteAssignment(
   assignmentId: number,
   institutionUrl: string,
+  dueDate?: string | null,
 ): Promise<CompleteAssignmentResponse> {
-  return apiClientCompleteAssignment(assignmentId, institutionUrl, await getToken())
+  return apiClientCompleteAssignment(assignmentId, institutionUrl, await getToken(), dueDate)
 }
 
 export async function apiSavePins(ids: number[], institutionUrl: string): Promise<void> {
