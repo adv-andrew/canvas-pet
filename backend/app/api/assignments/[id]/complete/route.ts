@@ -4,6 +4,7 @@ import { getCanvasUserIdForAuthUser } from '../../../../services/authService'
 import { completeAssignment } from '../../../../services/assignmentService'
 import { updateStreakOnCompletion } from '../../../../services/streakService'
 import { calculateAward, awardPoints } from '../../../../services/rewardPointsService'
+import { applyHappiness } from '../../../../services/happinessService'
 import { getSupabaseAdmin } from '../../../../lib/supabaseAdmin'
 
 export async function OPTIONS() {
@@ -29,7 +30,7 @@ export async function PATCH(
     const canvasUserId = await getCanvasUserIdForAuthUser(userId)
     const row = await completeAssignment(canvasUserId, institutionUrl, assignmentId)
 
-    // TODO: Juan -- wire HappinessService.apply(userId, row.completed_at, row.due_date) here
+    await applyHappiness(userId, row.completed_at, row.due_date)
 
     const newStreak = await updateStreakOnCompletion(userId, row.completed_at, row.due_date)
     const pointsEarned = calculateAward(row.completed_at, row.due_date, newStreak)
