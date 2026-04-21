@@ -117,84 +117,85 @@ export function Shop() {
         </button>
       </div>
 
-      {tab === 'shop' && (
-        <>
-          <div className="shop-controls">
-            <input
-              type="text"
-              placeholder="Search items..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="shop-search"
-            />
-
-            <select
-              value={costSort}
-              onChange={(e) =>
-                setCostSort(e.target.value as 'default' | 'low-high' | 'high-low')
-              }
-              className="shop-sort"
-            >
-              <option value="default">Sort by</option>
-              <option value="low-high">Cost: Low to High</option>
-              <option value="high-low">Cost: High to Low</option>
-            </select>
-
-            <label className="shop-checkbox">
+        {tab === 'shop' && (
+          <>
+            <div className="shop-controls">
               <input
-                type="checkbox"
-                checked={onlyAffordable}
-                onChange={(e) => setOnlyAffordable(e.target.checked)}
+                type="text"
+                placeholder="Search items..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="shop-search"
               />
-              Only affordable
-            </label>
-          </div>
-        </>
-      )}
 
-          <div className="shop-grid">
-          {displayedItems.length === 0 && (
-            <div className="shop-empty">
-              No matching items found.
+              <select
+                value={costSort}
+                onChange={(e) =>
+                  setCostSort(e.target.value as 'default' | 'low-high' | 'high-low')
+                }
+                className="shop-sort"
+              >
+                <option value="default">Sort by</option>
+                <option value="low-high">Cost: Low to High</option>
+                <option value="high-low">Cost: High to Low</option>
+              </select>
+
+              <label className="shop-checkbox">
+                <input
+                  type="checkbox"
+                  checked={onlyAffordable}
+                  onChange={(e) => setOnlyAffordable(e.target.checked)}
+                />
+                Only affordable
+              </label>
             </div>
-          )}
-          {displayedItems.map((item) => {
-            const isOwned = ownedIds.has(item.id)
-            const canAfford = balance >= item.cost
-            const isPurchasing = purchasing === item.id
 
-            return (
-              <div key={item.id} className={`shop-item ${isOwned ? 'owned' : ''}`}>
-                <div className="shop-item-image">
-                  {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} />
-                  ) : (
-                    '🎁'
-                  )}
+            <div className="shop-grid">
+              {displayedItems.length === 0 && (
+                <div className="shop-empty">
+                  No matching items found.
                 </div>
-                <div className="shop-item-name">{item.name}</div>
-                {item.description && (
-                  <div className="shop-item-desc">{item.description}</div>
-                )}
-                <div className="shop-item-cost">
-                  <span>⭐</span>
-                  <span>{item.cost}</span>
-                </div>
-                {isOwned ? (
-                  <div className="shop-owned-badge">Owned ✓</div>
-                ) : (
-                  <button
-                    className="shop-buy-btn"
-                    onClick={() => handlePurchase(item.id)}
-                    disabled={!canAfford || isPurchasing}
-                  >
-                    {isPurchasing ? 'Buying...' : canAfford ? 'Buy' : 'Not enough RP'}
-                  </button>
-                )}
-              </div>
-            )
-          })}
-        </div>
+              )}
+
+              {displayedItems.map((item) => {
+                const isOwned = ownedIds.has(item.id)
+                const canAfford = balance >= item.cost
+                const isPurchasing = purchasing === item.id
+
+                return (
+                  <div key={item.id} className={`shop-item ${isOwned ? 'owned' : ''}`}>
+                    <div className="shop-item-image">
+                      {item.image_url ? (
+                        <img src={item.image_url} alt={item.name} />
+                      ) : (
+                        '🎁'
+                      )}
+                    </div>
+                    <div className="shop-item-name">{item.name}</div>
+                    {item.description && (
+                      <div className="shop-item-desc">{item.description}</div>
+                    )}
+                    <div className="shop-item-cost">
+                      <span>⭐</span>
+                      <span>{item.cost}</span>
+                    </div>
+                    {isOwned ? (
+                      <div className="shop-owned-badge">Owned ✓</div>
+                    ) : (
+                      <button
+                        className="shop-buy-btn"
+                        onClick={() => handlePurchase(item.id)}
+                        disabled={!canAfford || isPurchasing}
+                      >
+                        {isPurchasing ? 'Buying...' : canAfford ? 'Buy' : 'Not enough RP'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
 
       {tab === 'owned' && (
         <div className="shop-grid">
@@ -203,6 +204,7 @@ export function Shop() {
               You don't own any items yet. Complete assignments to earn points!
             </div>
           )}
+
           {owned.map((item) => (
             <div key={item.item_id} className="shop-item owned">
               <div className="shop-item-image">
@@ -212,10 +214,13 @@ export function Shop() {
                   '🎁'
                 )}
               </div>
+
               <div className="shop-item-name">{item.shop_items.name}</div>
+
               {item.shop_items.description && (
                 <div className="shop-item-desc">{item.shop_items.description}</div>
               )}
+
               <div className="shop-owned-badge">Owned ✓</div>
             </div>
           ))}
