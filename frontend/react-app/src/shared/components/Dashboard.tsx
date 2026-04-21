@@ -189,6 +189,7 @@ export function Dashboard({
   const [localPinnedIds, setLocalPinnedIds] = useState<Set<number>>(new Set())
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const pinnedIds = externalPinnedIds ?? localPinnedIds
 
@@ -217,8 +218,11 @@ export function Dashboard({
   const handleSavePins = async () => {
     if (!onSavePins) return
     setSaving(true)
+    setSaveError(null)
     try {
       await onSavePins()
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save pins')
     } finally {
       setSaving(false)
     }
@@ -338,6 +342,9 @@ export function Dashboard({
                 </button>
               )}
             </div>
+            {saveError && (
+              <div className="connect-error-banner">{saveError}</div>
+            )}
           </div>
           {!hasAssignments && (
             <div className="empty-state">

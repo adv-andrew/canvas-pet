@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto'
+import { createHmac } from 'node:crypto'
 import { getSupabaseAdmin } from '../lib/supabaseAdmin'
 import type { RegisterCanvasUserInput, ExtensionAuthInput, LinkCanvasInput, StoreCanvasTokenInput } from '../schemas/auth'
 
@@ -66,7 +66,7 @@ export async function linkCanvasUser(
   webEmail: string | null,
   input: LinkCanvasInput,
 ): Promise<void> {
-  const { error } = await getSupabaseAdmin()
+  const { data, error } = await getSupabaseAdmin()
     .from('canvas_users')
     .update({
       web_user_id: webSupabaseUserId,
@@ -76,7 +76,11 @@ export async function linkCanvasUser(
     })
     .eq('canvas_user_id', input.canvas_user_id)
     .eq('institution_url', input.institution_url)
+    .select('id')
   if (error) throw new Error(`Failed to link canvas user: ${error.message}`)
+  if (!data || data.length === 0) {
+    throw new Error('Canvas account not found. Open Canvas with the extension active, then try again.')
+  }
 }
 
 // Stores the Canvas personal access token for the given Supabase Auth user.
