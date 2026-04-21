@@ -4,8 +4,12 @@ import type { TrackedAssignment, CanvasPlannerItem, CanvasAnnouncement, ConnectA
 import { AssignmentCard } from './AssignmentCard'
 import { AnnouncementCard } from './AnnouncementCard'
 import { AccessTokenPrompt } from './AccessTokenPrompt'
+import { PixelPet } from './PixelPet'
+import type { PetStats } from '../lib/apiClient'
 
 interface Props {
+  showTopPet?: boolean
+  topPetStats?: PetStats | null
   assignments: TrackedAssignment[]
   announcements: CanvasAnnouncement[]
   loading: boolean
@@ -90,9 +94,13 @@ function GroupSection({ title, items, onSave, onUnsave, onComplete }: GroupSecti
   )
 }
 
-export function Dashboard({ assignments, announcements, loading, error, onSave, onUnsave, onComplete, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onDismissLongAccess, onFullscreen, onMinimize, isFullscreen, hideHeader, banner }: Props) {
+export function Dashboard({ showTopPet = false, topPetStats = null, assignments, announcements, loading, error, onSave, onUnsave, onComplete, onRefresh, onConnectApp, onConnectAppWithPassword, onSubmitManualToken, connectAppState, onDismissLongAccess, onFullscreen, onMinimize, isFullscreen, hideHeader, banner }: Props) {
   const [activeTab, setActiveTab] = useState<'assignments' | 'announcements'>('assignments')
   const [showAll, setShowAll] = useState(false)
+
+  const petHappiness = topPetStats?.happiness_score ?? 50
+  const petStreak = topPetStats?.streak ?? 0
+  const petPoints = topPetStats?.reward_points ?? 0
 
   const visibleAssignments = applyDefaultWindow(assignments, showAll)
   const groups = groupAssignments(visibleAssignments)
@@ -133,6 +141,43 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
           </button>
         </div>
       </header>}
+
+      {showTopPet && (
+        <div className="extension-pet-section">
+          <div className="extension-pet-header">
+            <div className="extension-pet-container">
+              <PixelPet happiness={petHappiness} size={140} />
+              <div className="extension-pet-mood-label">{getMoodLabel(petHappiness)}</div>
+            </div>
+          </div>
+
+          <div className="extension-pet-stats-grid">
+            <div className="extension-pet-stat-card extension-pet-stat-happiness">
+              <div className="extension-pet-stat-icon">💜</div>
+              <div className="extension-pet-stat-value">{petHappiness}%</div>
+              <div className="extension-pet-stat-label">HAPPINESS</div>
+              <div className="extension-pet-stat-bar">
+                <div
+                  className="extension-pet-stat-bar-fill"
+                  style={{ width: `${petHappiness}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="extension-pet-stat-card extension-pet-stat-streak">
+              <div className="extension-pet-stat-icon">🔥</div>
+              <div className="extension-pet-stat-value">{petStreak}</div>
+              <div className="extension-pet-stat-label">DAY STREAK</div>
+            </div>
+
+            <div className="extension-pet-stat-card extension-pet-stat-points">
+              <div className="extension-pet-stat-icon">⭐</div>
+              <div className="extension-pet-stat-value">{petPoints}</div>
+              <div className="extension-pet-stat-label">REWARD POINTS</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {connectAppState === 'needsLongAccess' && (
         <AccessTokenPrompt
@@ -230,4 +275,12 @@ export function Dashboard({ assignments, announcements, loading, error, onSave, 
       )}
     </div>
   )
+}
+
+function getMoodLabel(happiness: number): string {
+  if (happiness >= 80) return 'Ecstatic!'
+  if (happiness >= 60) return 'Happy'
+  if (happiness >= 40) return 'Okay'
+  if (happiness >= 20) return 'Sad'
+  return 'Miserable'
 }
