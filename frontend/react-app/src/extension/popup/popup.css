@@ -362,6 +362,27 @@ body {
   color: #374151;
 }
 
+/* Show all toggle */
+.show-all-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 12px 0;
+}
+
+.show-all-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  text-decoration: underline;
+}
+
+.show-all-btn:hover {
+  color: #374151;
+}
+
 /* Group sections */
 .group-section {
   padding: 8px 12px 4px;
