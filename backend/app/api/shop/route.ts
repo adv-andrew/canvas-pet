@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
       .eq('active', true)
       .order('cost', { ascending: true })
     if (error) throw new Error(error.message)
-    return NextResponse.json({ data })
+    return NextResponse.json({ data }, { headers: { 'Cache-Control': 'private, max-age=10' } })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     const status = message.includes('JWT') || message.includes('Authorization') ? 401 : 400

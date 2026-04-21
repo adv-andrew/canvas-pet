@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       .select('id, canvas_user_id, display_name, email, role, happiness_score, streak, reward_points, created_at')
       .order('created_at', { ascending: false })
     if (error) throw new Error(error.message)
-    return NextResponse.json({ data })
+    return NextResponse.json({ data }, { headers: { 'Cache-Control': 'private, max-age=10' } })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     const status =
