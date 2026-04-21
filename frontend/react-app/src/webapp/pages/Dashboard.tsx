@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { apiGetMe, apiLinkCanvas, apiWebSavePins, apiWebFetchPinnedIds } from '../lib/api'
+import { apiGetMe, apiLinkCanvas, apiWebSavePins, apiWebFetchPinnedIds, apiWebFetchSavedIds, apiWebCompleteAssignment } from '../lib/api'
 import type { MeResponse } from '../lib/api'
 import type { CanvasPlannerItem, CanvasAnnouncement, TrackedAssignment } from '../../shared/types/canvas'
 import { Dashboard as SharedDashboard } from '../../shared/components/Dashboard'
@@ -11,6 +11,7 @@ export function Dashboard() {
   const [announcements, setAnnouncements] = useState<CanvasAnnouncement[]>([])
   const [institutionUrl, setInstitutionUrl] = useState<string | null>(null)
   const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set())
+  const [completedIds, setCompletedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -28,9 +29,8 @@ export function Dashboard() {
       if (payload.institutionUrl) {
         const url = payload.institutionUrl
         setInstitutionUrl(url)
-        apiWebFetchPinnedIds(url)
-          .then((ids) => setPinnedIds(new Set(ids)))
-          .catch(() => { /* non-fatal */ })
+        apiWebFetchPinnedIds(url).then((ids) => setPinnedIds(new Set(ids))).catch(() => { /* non-fatal */ })
+        apiWebFetchSavedIds(url).then(({ completedIds: cids }) => setCompletedIds(new Set(cids))).catch(() => { /* non-fatal */ })
       }
     }
     window.addEventListener('message', handler)
@@ -79,8 +79,20 @@ export function Dashboard() {
     await apiWebSavePins([...pinnedIds], institutionUrl)
   }, [institutionUrl, pinnedIds])
 
+  const completeAssignment = useCallback(async (assignmentId: number): Promise<{ points_earned: number } | void> => {
+    if (!institutionUrl) return
+    const result = await apiWebCompleteAssignment(assignmentId, institutionUrl)
+    setCompletedIds((prev) => new Set([...prev, assignmentId]))
+    return result
+  }, [institutionUrl])
+
   const hasData = items.length > 0 || announcements.length > 0
-  const assignments: TrackedAssignment[] = items.map((item) => ({ ...item, isSaved: false, savedAt: null }))
+  const assignments: TrackedAssignment[] = items.map((item) => ({
+    ...item,
+    isSaved: false,
+    savedAt: null,
+    isCompleted: completedIds.has(item.plannable_id),
+  }))
   const banner = (
     <>
       {me && !me.canvas_linked && (
@@ -108,6 +120,7 @@ export function Dashboard() {
         onTogglePin={togglePin}
         onClearPins={clearPins}
         onSavePins={institutionUrl ? savePins : undefined}
+        onComplete={institutionUrl ? completeAssignment : undefined}
         onRefresh={() => window.postMessage({ type: 'CP_REQUEST_DATA' }, window.location.origin)}
         hideHeader
         banner={banner}
