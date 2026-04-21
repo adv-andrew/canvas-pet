@@ -147,14 +147,27 @@ export function AssignmentCard({ assignment, isPinned, isSelected, onPin, onSele
         </div>
       </div>
       <div className="calendar-detail-body">
-        <a
-          className="calendar-detail-title"
-          href={assignment.plannable.html_url}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {assignment.plannable.title}
-        </a>
+        {assignment.plannable.html_url ? (
+          <a
+            className="calendar-detail-title"
+            href={assignment.plannable.html_url}
+            rel="noreferrer"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              const url = assignment.plannable.html_url!
+              if (typeof chrome !== 'undefined' && chrome.tabs) {
+                void chrome.tabs.create({ url })
+              } else {
+                window.open(url, '_blank', 'noopener,noreferrer')
+              }
+            }}
+          >
+            {assignment.plannable.title}
+          </a>
+        ) : (
+          <span className="calendar-detail-title">{assignment.plannable.title}</span>
+        )}
         <div className="calendar-detail-footer">
           <StatusBadge submissions={assignment.submissions} isAppCompleted={!!assignment.isCompleted} />
           <div className="assignment-point-stats">
