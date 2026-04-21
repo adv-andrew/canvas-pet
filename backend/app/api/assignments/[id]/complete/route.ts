@@ -4,7 +4,7 @@ import { getCanvasUserIdForAuthUser } from '../../../../services/authService'
 import { completeAssignment } from '../../../../services/assignmentService'
 import { updateStreakOnCompletion } from '../../../../services/streakService'
 import { calculateAward, awardPoints } from '../../../../services/rewardPointsService'
-import { applyHappiness } from '../../../../services/happinessService'
+import { applyHappiness } from '../../../services/happinessService'
 import { getSupabaseAdmin } from '../../../../lib/supabaseAdmin'
 
 export async function OPTIONS() {

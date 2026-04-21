@@ -3,10 +3,6 @@ import { getSupabaseAdmin } from '../lib/supabaseAdmin'
 const MIN_HAPPINESS = 0
 const MAX_HAPPINESS = 100
 
-/**
- * Calculate happiness delta based on submission timing.
- * Early submissions boost happiness, late submissions reduce it.
- */
 export function calculateHappinessDelta(
   completedAt: Date | string,
   dueDate: Date | string,
@@ -15,17 +11,14 @@ export function calculateHappinessDelta(
   const due = new Date(dueDate).getTime()
   const hoursEarly = (due - completed) / (1000 * 60 * 60)
 
-  if (hoursEarly >= 48) return 15      // 2+ days early
-  if (hoursEarly >= 24) return 10      // 1+ day early
-  if (hoursEarly >= 0) return 5        // on time
-  if (hoursEarly >= -24) return -5     // up to 1 day late
-  if (hoursEarly >= -72) return -10    // up to 3 days late
-  return -15                           // more than 3 days late
+  if (hoursEarly >= 48) return 15
+  if (hoursEarly >= 24) return 10
+  if (hoursEarly >= 0) return 5
+  if (hoursEarly >= -24) return -5
+  if (hoursEarly >= -72) return -10
+  return -15
 }
 
-/**
- * Apply happiness change to a user's pet.
- */
 export async function applyHappiness(
   userId: string,
   completedAt: Date | string,
@@ -51,15 +44,10 @@ export async function applyHappiness(
   return newScore
 }
 
-/**
- * Decay happiness for users with overdue assignments.
- * Called by scheduled cron job.
- */
 export async function decayHappinessForOverdue(): Promise<number> {
   const supabase = getSupabaseAdmin()
   const now = new Date().toISOString()
 
-  // Find users with incomplete overdue assignments
   const { data: overdueUsers } = await supabase
     .from('tracked_assignments')
     .select('canvas_user_id')
@@ -72,7 +60,6 @@ export async function decayHappinessForOverdue(): Promise<number> {
   const decayAmount = 2
 
   for (const canvasUserId of userIds) {
-    // Get auth user id from canvas_users
     const { data: user } = await supabase
       .from('canvas_users')
       .select('id, happiness_score')
