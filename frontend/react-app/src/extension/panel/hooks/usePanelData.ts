@@ -10,7 +10,7 @@ import {
   apiPushCanvasSnapshot,
   runExtensionAuth,
 } from '../../../shared/lib/extensionApi'
-import { apiClientGetMe } from '../../../shared/lib/apiClient'
+import { apiClientGetMe, apiClientGetPetStats, type PetStats } from '../../../shared/lib/apiClient'
 
 const WEBAPP_URL = import.meta.env.VITE_WEBAPP_URL as string
 
@@ -29,6 +29,7 @@ interface PanelDataResult {
   announcements: CanvasAnnouncement[]
   loading: boolean
   error: string | null
+  petStats: PetStats | null
   userId: string | null
   institutionUrl: string | null
   webAccount: { displayName: string | null; email: string | null } | null
@@ -59,6 +60,7 @@ export function usePanelData(): PanelDataResult {
   const [institutionUrl, setInstitutionUrl] = useState<string | null>(null)
   const [webAccount, setWebAccount] = useState<{ displayName: string | null; email: string | null } | null>(null)
   const [connectAppState, setConnectAppState] = useState<ConnectAppState>('idle')
+  const [petStats, setPetStats] = useState<PetStats | null>(null)
 
   const handleCanvasData = useCallback(async (payload: CanvasDataPayload) => {
     setRawItems(payload.items)
@@ -76,14 +78,18 @@ export function usePanelData(): PanelDataResult {
     setCompletedIds(result.completedIds)
     setPinnedIds(result.pinnedIds)
 
-    // Check web account link (non-fatal)
+    // Check web account link + pet stats (non-fatal)
     try {
       const token = (await supabaseExtAuth.auth.getSession()).data.session?.access_token
       if (token) {
-        const me = await apiClientGetMe(token)
+        const [me, stats] = await Promise.all([
+          apiClientGetMe(token),
+          apiClientGetPetStats(token),
+        ])
         if (me.web_linked) {
           setWebAccount({ displayName: me.web_display_name ?? null, email: me.web_email ?? null })
         }
+        setPetStats(stats)
       }
     } catch {
       // non-fatal
@@ -293,6 +299,7 @@ export function usePanelData(): PanelDataResult {
     announcements,
     loading,
     error,
+    petStats,
     userId,
     institutionUrl,
     webAccount,

@@ -4,8 +4,12 @@ import type { TrackedAssignment, CanvasAnnouncement, ConnectAppState } from '../
 import { AssignmentCard } from './AssignmentCard'
 import { AnnouncementCard } from './AnnouncementCard'
 import { AccessTokenPrompt } from './AccessTokenPrompt'
+import { PixelPet } from './PixelPet'
+import type { PetStats } from '../lib/apiClient'
 
 interface Props {
+  showTopPet?: boolean
+  topPetStats?: PetStats | null
   assignments: TrackedAssignment[]
   announcements: CanvasAnnouncement[]
   loading: boolean
@@ -29,6 +33,14 @@ interface Props {
 }
 
 const OVERDUE_CUTOFF_DAYS = 30
+
+function getMoodLabel(happiness: number): string {
+  if (happiness >= 80) return 'Ecstatic!'
+  if (happiness >= 60) return 'Happy'
+  if (happiness >= 40) return 'Okay'
+  if (happiness >= 20) return 'Sad'
+  return 'Miserable'
+}
 
 function isSubmitted(item: TrackedAssignment): boolean {
   return item.submissions !== false && item.submissions.submitted
@@ -163,6 +175,8 @@ function GroupSection({ title, items, pinnedIds, selectedId, onTogglePin, onSele
 }
 
 export function Dashboard({
+  showTopPet = false,
+  topPetStats = null,
   assignments,
   announcements,
   loading,
@@ -228,6 +242,10 @@ export function Dashboard({
     }
   }
 
+  const petHappiness = topPetStats?.happiness_score ?? 50
+  const petStreak = topPetStats?.streak ?? 0
+  const petPoints = topPetStats?.reward_points ?? 0
+
   const visibleAssignments = applyFilters(assignments, showAll)
   const unpinnedVisible = visibleAssignments.filter((a) => !pinnedIds.has(a.plannable_id))
   const groups = groupAssignments(unpinnedVisible)
@@ -270,6 +288,43 @@ export function Dashboard({
           </button>
         </div>
       </header>}
+
+      {showTopPet && (
+        <div className="extension-pet-section">
+          <div className="extension-pet-header">
+            <div className="extension-pet-container">
+              <PixelPet happiness={petHappiness} size={140} />
+              <div className="extension-pet-mood-label">{getMoodLabel(petHappiness)}</div>
+            </div>
+          </div>
+
+          <div className="extension-pet-stats-grid">
+            <div className="extension-pet-stat-card extension-pet-stat-happiness">
+              <div className="extension-pet-stat-icon">💜</div>
+              <div className="extension-pet-stat-value">{petHappiness}%</div>
+              <div className="extension-pet-stat-label">HAPPINESS</div>
+              <div className="extension-pet-stat-bar">
+                <div
+                  className="extension-pet-stat-bar-fill"
+                  style={{ width: `${petHappiness}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="extension-pet-stat-card extension-pet-stat-streak">
+              <div className="extension-pet-stat-icon">🔥</div>
+              <div className="extension-pet-stat-value">{petStreak}</div>
+              <div className="extension-pet-stat-label">DAY STREAK</div>
+            </div>
+
+            <div className="extension-pet-stat-card extension-pet-stat-points">
+              <div className="extension-pet-stat-icon">⭐</div>
+              <div className="extension-pet-stat-value">{petPoints}</div>
+              <div className="extension-pet-stat-label">REWARD POINTS</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {connectAppState === 'needsLongAccess' && (
         <AccessTokenPrompt
@@ -342,10 +397,10 @@ export function Dashboard({
                 </button>
               )}
             </div>
-            {saveError && (
-              <div className="connect-error-banner">{saveError}</div>
-            )}
           </div>
+          {saveError && (
+            <div className="connect-error-banner">{saveError}</div>
+          )}
           {!hasAssignments && (
             <div className="empty-state">
               <p>No upcoming assignments. 🎉</p>
