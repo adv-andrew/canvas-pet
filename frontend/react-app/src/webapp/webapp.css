@@ -19,7 +19,7 @@ body {
   align-items: center;
   height: 52px;
   padding: 0 24px;
-  background: var(--brand-red);
+  background: var(--cp-primary);
   color: white;
   position: sticky;
   top: 0;
@@ -52,12 +52,12 @@ body {
 
 .navbar-link:hover {
   color: white;
-  background: #a82828;
+  background: var(--cp-primary-dark);
 }
 
 .navbar-link.active {
   color: white;
-  background: #9b2424;
+  background: var(--cp-primary-darker);
 }
 
 .navbar-right {
@@ -101,7 +101,7 @@ body {
 }
 
 .navbar-profile-btn {
-  background: #a82828;
+  background: var(--cp-primary-dark);
   border: 1px solid rgba(255, 255, 255, 0.4);
   color: white;
   cursor: pointer;
@@ -116,7 +116,7 @@ body {
 }
 
 .navbar-profile-btn:hover {
-  background: #9b2424;
+  background: var(--cp-primary-darker);
 }
 
 .navbar-signout-btn {
@@ -132,7 +132,7 @@ body {
 }
 
 .navbar-signout-btn:hover {
-  background: #a82828;
+  background: var(--cp-primary-dark);
 }
 
 /* ─── Page layout ─────────────────────────────────────────────── */
@@ -270,7 +270,7 @@ body {
 }
 
 .signin-input:focus {
-  border-color: #e53e3e;
+  border-color: var(--cp-primary);
   box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.15);
 }
 
@@ -281,7 +281,7 @@ body {
 
 .signin-submit-btn {
   padding: 10px 16px;
-  background: #c53030;
+  background: var(--cp-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -292,7 +292,7 @@ body {
 }
 
 .signin-submit-btn:hover:not(:disabled) {
-  background: #9b2c2c;
+  background: var(--cp-primary-darker);
 }
 
 .signin-submit-btn:disabled {
@@ -448,7 +448,7 @@ body {
 .pet-mood-label {
   font-size: 18px;
   font-weight: 600;
-  color: #7c3aed;
+  color: var(--cp-primary);
 }
 
 .stats-grid {
@@ -505,18 +505,20 @@ body {
 
 .stat-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+  background: linear-gradient(90deg, var(--cp-primary), var(--cp-primary-light));
   border-radius: 3px;
   transition: width 0.5s ease;
 }
 
-.stat-happiness .stat-value { color: #7c3aed; }
+.stat-happiness .stat-value { color: #ef4444; }
 .stat-streak .stat-value { color: #f97316; }
 .stat-points .stat-value { color: #eab308; }
 
+.stat-happiness .stat-bar-fill { background: linear-gradient(90deg, #ef4444, #fca5a5); }
+
 .home-tips {
-  background: #faf5ff;
-  border: 1px solid #e9d5ff;
+  background: var(--cp-primary-faint);
+  border: 1px solid var(--cp-primary-faint-border);
   border-radius: 12px;
   padding: 20px 24px;
   width: 100%;
@@ -526,7 +528,7 @@ body {
 .home-tips h3 {
   font-size: 14px;
   font-weight: 600;
-  color: #7c3aed;
+  color: var(--cp-primary);
   margin-bottom: 12px;
 }
 
@@ -548,7 +550,7 @@ body {
   content: '•';
   position: absolute;
   left: 6px;
-  color: #a78bfa;
+  color: var(--cp-primary-light);
 }
 
 .home-error {
@@ -602,8 +604,8 @@ body {
 }
 
 .shop-tab.active {
-  background: #7c3aed;
-  border-color: #7c3aed;
+  background: var(--cp-primary);
+  border-color: var(--cp-primary);
   color: white;
 }
 
@@ -679,7 +681,7 @@ body {
 .shop-buy-btn {
   width: 100%;
   padding: 8px 16px;
-  background: #7c3aed;
+  background: var(--cp-primary);
   border: none;
   border-radius: 6px;
   color: white;
@@ -690,7 +692,7 @@ body {
 }
 
 .shop-buy-btn:hover:not(:disabled) {
-  background: #6d28d9;
+  background: var(--cp-primary-dark);
 }
 
 .shop-buy-btn:disabled {
@@ -751,7 +753,7 @@ body {
 }
 
 .calendar-today-btn {
-  background: #c53030;
+  background: var(--cp-primary);
   border: none;
   border-radius: 6px;
   padding: 6px 16px;
@@ -762,7 +764,7 @@ body {
 }
 
 .calendar-today-btn:hover {
-  background: #9b2c2c;
+  background: var(--cp-primary-darker);
 }
 
 .calendar-grid {
@@ -809,13 +811,13 @@ body {
 }
 
 .calendar-filter-pill:hover {
-  border-color: #c53030;
-  color: #c53030;
+  border-color: var(--cp-primary);
+  color: var(--cp-primary);
 }
 
 .calendar-filter-pill.active {
-  background: #c53030;
-  border-color: #c53030;
+  background: var(--cp-primary);
+  border-color: var(--cp-primary);
   color: white;
 }
 
@@ -915,12 +917,12 @@ body {
 }
 
 .calendar-day.today {
-  background: #fff5f5;
+  background: var(--cp-primary-faint);
 }
 
 .calendar-day.selected {
-  background: #fff5f5;
-  outline: 2px solid #e53e3e;
+  background: var(--cp-primary-faint);
+  outline: 2px solid var(--cp-primary);
   outline-offset: -2px;
 }
 
@@ -938,7 +940,7 @@ body {
   line-height: 1;
 }
 .calendar-day-number:hover {
-  color: #e53e3e;
+  color: var(--cp-primary);
 }
 
 .calendar-day.other-month .calendar-day-number {
@@ -946,7 +948,7 @@ body {
 }
 
 .calendar-day.today .calendar-day-number {
-  background: #c53030;
+  background: var(--cp-primary);
   color: white;
   width: 24px;
   height: 24px;
@@ -1210,7 +1212,7 @@ body {
 
 /* ─── Admin page ─────────────────────────────────────────────────── */
 .navbar-admin-btn {
-  background: #a82828;
+  background: var(--cp-primary-dark);
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
   font-size: 11px;
@@ -1222,7 +1224,7 @@ body {
 }
 
 .navbar-admin-btn:hover {
-  background: #9b2424;
+  background: var(--cp-primary-darker);
   color: white;
 }
 
@@ -1276,8 +1278,8 @@ body {
 }
 
 .admin-tab.active {
-  background: #c53030;
-  border-color: #c53030;
+  background: var(--cp-primary);
+  border-color: var(--cp-primary);
   color: white;
 }
 
@@ -1299,12 +1301,12 @@ body {
 
 .admin-add-form input:focus {
   outline: none;
-  border-color: #e53e3e;
+  border-color: var(--cp-primary);
 }
 
 .admin-add-form button {
   padding: 8px 20px;
-  background: #c53030;
+  background: var(--cp-primary);
   border: none;
   border-radius: 6px;
   color: white;
@@ -1315,7 +1317,7 @@ body {
 }
 
 .admin-add-form button:hover:not(:disabled) {
-  background: #9b2c2c;
+  background: var(--cp-primary-darker);
 }
 
 .admin-add-form button:disabled {
@@ -1575,6 +1577,16 @@ body {
   }
 }
 
+
+/* ─── Theme swatches (webapp overrides) ─────────────────────────── */
+.theme-swatches {
+  gap: 8px;
+}
+
+.theme-swatch {
+  width: 32px;
+  height: 32px;
+}
 
 /* ───  Shop Search Bar ──────────────────────────────────────────── */
 

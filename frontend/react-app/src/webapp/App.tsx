@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom'
+import { ThemeProvider } from '../shared/lib/themeContext'
 import { supabase } from './lib/supabaseClient'
 import { apiClientGetPetStats } from '../shared/lib/apiClient'
 import { NavBar } from './components/NavBar'
@@ -83,6 +84,7 @@ function ProtectedLayout() {
 
 export function App() {
   return (
+    <ThemeProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/sign-in" element={<SignIn />} />
@@ -100,5 +102,6 @@ export function App() {
         <Route path="*" element={<Navigate to="/sign-in" replace />} />
       </Routes>
     </BrowserRouter>
+    </ThemeProvider>
   )
 }

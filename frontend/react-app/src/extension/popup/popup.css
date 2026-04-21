@@ -26,7 +26,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: var(--brand-red);
+  background: var(--cp-primary);
   color: white;
 }
 
@@ -282,8 +282,8 @@ body {
 }
 
 .tab-btn.active {
-  color: #e53e3e;
-  border-bottom-color: #e53e3e;
+  color: var(--cp-primary);
+  border-bottom-color: var(--cp-primary);
 }
 
 .tab-count {
@@ -297,8 +297,8 @@ body {
 }
 
 .tab-btn.active .tab-count {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--cp-primary-faint);
+  color: var(--cp-primary-darker);
 }
 
 /* Show all toggle */
@@ -332,7 +332,7 @@ body {
 .save-pins-btn {
   background: none;
   border: none;
-  color: #e53e3e;
+  color: var(--cp-primary);
   font-size: 11px;
   cursor: pointer;
   padding: 2px 4px;
@@ -340,7 +340,7 @@ body {
 }
 
 .save-pins-btn:hover {
-  color: #c53030;
+  color: var(--cp-primary-dark);
 }
 
 .save-pins-btn:disabled {
@@ -504,8 +504,8 @@ body {
   font-size: 14px;
   padding: 3px 10px;
   border-radius: 6px;
-  border: 1px solid #7c3aed;
-  background: #7c3aed;
+  border: 1px solid var(--cp-primary);
+  background: var(--cp-primary);
   color: white;
   cursor: pointer;
   font-weight: 600;
@@ -513,8 +513,8 @@ body {
 }
 
 .complete-btn:hover:not(:disabled) {
-  background: #6d28d9;
-  border-color: #6d28d9;
+  background: var(--cp-primary-dark);
+  border-color: var(--cp-primary-dark);
 }
 
 .complete-btn:disabled {
@@ -523,7 +523,7 @@ body {
 }
 
 .assignment-card.selected {
-  outline: 2px solid #e53e3e;
+  outline: 2px solid var(--cp-primary);
   outline-offset: -2px;
 }
 
@@ -572,7 +572,7 @@ body {
   width: 28px;
   height: 28px;
   border: 3px solid #e5e7eb;
-  border-top-color: #e53e3e;
+  border-top-color: var(--cp-primary);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   margin-bottom: 12px;
@@ -611,7 +611,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: var(--brand-red);
+  background: var(--cp-primary);
   color: white;
 }
 
@@ -773,7 +773,7 @@ body {
 }
 
 .signin-input:focus {
-  border-color: #e53e3e;
+  border-color: var(--cp-primary);
   box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.15);
 }
 
@@ -793,19 +793,19 @@ body {
 .signin-consent input[type="checkbox"] {
   margin-top: 2px;
   flex-shrink: 0;
-  accent-color: var(--brand-red);
+  accent-color: var(--cp-primary);
 }
 .signin-policy-link {
   background: none;
   border: none;
   padding: 0;
-  color: var(--brand-red);
+  color: var(--cp-primary);
   cursor: pointer;
   font-size: 13px;
   text-decoration: underline;
 }
 .signin-policy-link:hover {
-  color: #9b2c2c;
+  color: var(--cp-primary-darker);
 }
 .signin-policy-footer {
   display: block;
@@ -895,7 +895,7 @@ body {
   margin-bottom: 4px;
 }
 .pp-body a {
-  color: var(--brand-red);
+  color: var(--cp-primary);
   text-decoration: underline;
 }
 .pp-effective {
@@ -911,7 +911,7 @@ body {
   flex-shrink: 0;
 }
 .pp-close-btn {
-  background: var(--brand-red);
+  background: var(--cp-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -921,7 +921,7 @@ body {
   cursor: pointer;
 }
 .pp-close-btn:hover {
-  background: #9b2c2c;
+  background: var(--cp-primary-darker);
 }
 
 /* ─── Not on Canvas screen ─────────────────────────────────────── */
@@ -955,6 +955,43 @@ body {
   color: #1d4ed8;
   font-size: 13px;
   font-weight: 500;
+}
+
+/* ─── Themed pet body ───────────────────────────────────────────── */
+.pet-body       { fill: var(--cp-pet-body); }
+.pet-body-light { fill: var(--cp-pet-body-light); }
+
+/* ─── Theme swatches ────────────────────────────────────────────── */
+.account-theme-section {
+  margin-bottom: 16px;
+}
+
+.theme-swatches {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.theme-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: transform 0.15s, outline-color 0.15s;
+  padding: 0;
+}
+
+.theme-swatch:hover {
+  transform: scale(1.1);
+}
+
+.theme-swatch.active {
+  outline: 3px solid #374151;
+  outline-offset: 2px;
 }
 
 /* ─── Pixel Pet ─────────────────────────────────────────────────── */

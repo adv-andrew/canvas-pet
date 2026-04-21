@@ -17,9 +17,6 @@ function getMood(happiness: number): PetMood {
 }
 
 const COLORS = {
-  body: '#7c3aed',
-  bodyLight: '#a78bfa',
-  bodyDark: '#5b21b6',
   cheek: '#f472b6',
   eye: '#1e1b4b',
   eyeShine: '#ffffff',
@@ -66,14 +63,14 @@ export function PixelPet({ happiness, size = 120, animate = true }: Props) {
         </defs>
 
         {/* Body */}
-        <ellipse cx="60" cy="65" rx="42" ry="38" fill={COLORS.body} />
-        <ellipse cx="60" cy="60" rx="38" ry="34" fill={COLORS.bodyLight} />
+        <ellipse cx="60" cy="65" rx="42" ry="38" className="pet-body" />
+        <ellipse cx="60" cy="60" rx="38" ry="34" className="pet-body-light" />
 
         {/* Ears */}
-        <ellipse cx="28" cy="32" rx="12" ry="16" fill={COLORS.body} />
-        <ellipse cx="28" cy="30" rx="8" ry="12" fill={COLORS.bodyLight} />
-        <ellipse cx="92" cy="32" rx="12" ry="16" fill={COLORS.body} />
-        <ellipse cx="92" cy="30" rx="8" ry="12" fill={COLORS.bodyLight} />
+        <ellipse cx="28" cy="32" rx="12" ry="16" className="pet-body" />
+        <ellipse cx="28" cy="30" rx="8" ry="12" className="pet-body-light" />
+        <ellipse cx="92" cy="32" rx="12" ry="16" className="pet-body" />
+        <ellipse cx="92" cy="30" rx="8" ry="12" className="pet-body-light" />
 
         {/* Cheeks */}
         <ellipse cx="30" cy="65" rx="10" ry="6" fill={COLORS.cheek} opacity="0.6" />
