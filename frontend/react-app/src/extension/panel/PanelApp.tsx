@@ -48,8 +48,6 @@ export function PanelApp() {
         announcements={data.announcements}
         loading={data.loading}
         error={data.error}
-        onSave={data.saveAssignment}
-        onUnsave={data.unsaveAssignment}
         onComplete={data.completeAssignment}
         onRefresh={data.refetch}
         onConnectApp={data.handleConnectApp}
