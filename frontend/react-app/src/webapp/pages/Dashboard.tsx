@@ -80,7 +80,7 @@ export function Dashboard() {
     await apiWebSavePins([...pinnedIds], institutionUrl)
   }, [institutionUrl, pinnedIds])
 
-  const { updateStats } = usePetStats()
+  const { stats, updateStats } = usePetStats()
 
   const completeAssignment = useCallback(async (assignmentId: number): Promise<{ points_earned: number } | void> => {
     if (!institutionUrl) return
@@ -121,6 +121,7 @@ export function Dashboard() {
         announcements={announcements}
         loading={loading}
         error={null}
+        topPetStats={stats ?? undefined}
         pinnedIds={pinnedIds}
         onTogglePin={togglePin}
         onClearPins={clearPins}

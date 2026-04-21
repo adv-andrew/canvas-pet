@@ -2,11 +2,13 @@ import { useState } from 'react'
 import type { TrackedAssignment } from '../types/canvas'
 import { StatusBadge } from './StatusBadge'
 import { formatExactDueDate } from '../lib/dateUtils'
+import { previewRP, previewHappinessDelta } from '../lib/rewardCalculations'
 
 interface Props {
   assignment: TrackedAssignment
   isPinned: boolean
   isSelected?: boolean
+  streak?: number
   onPin: () => void
   onSelect?: () => void
   onRemove?: () => void
@@ -58,26 +60,7 @@ function getTypeIcon(type: string): string {
   return '📝'
 }
 
-// Mirrors backend calculateAward base (without streak, which is user-level)
-function calculateBaseRP(dueDate: string | null): number {
-  if (!dueDate) return 5
-  const daysEarly = (new Date(dueDate).getTime() - Date.now()) / (24 * 60 * 60 * 1000)
-  if (daysEarly < 0) return 0
-  if (daysEarly >= 2) return 15
-  if (daysEarly >= 1) return 10
-  return 5
-}
-
-function calculateHappinessGain(dueDate: string | null): number {
-  if (!dueDate) return 5
-  const daysEarly = (new Date(dueDate).getTime() - Date.now()) / (24 * 60 * 60 * 1000)
-  if (daysEarly < 0) return 0
-  if (daysEarly >= 2) return 10
-  if (daysEarly >= 1) return 7
-  return 5
-}
-
-export function AssignmentCard({ assignment, isPinned, isSelected, onPin, onSelect, onRemove, onComplete, courseColor }: Readonly<Props>) {
+export function AssignmentCard({ assignment, isPinned, isSelected, streak = 0, onPin, onSelect, onRemove, onComplete, courseColor }: Readonly<Props>) {
   const [completing, setCompleting] = useState(false)
   const [pointsEarned, setPointsEarned] = useState<number | null>(null)
 
@@ -86,8 +69,8 @@ export function AssignmentCard({ assignment, isPinned, isSelected, onPin, onSele
   const color = isOverdue(assignment) ? OVERDUE_COLOR : baseColor
   const done = isCompleted(assignment)
   const dueDate = assignment.plannable.due_at ?? assignment.plannable_date
-  const rpBase = calculateBaseRP(dueDate)
-  const happinessGain = calculateHappinessGain(dueDate)
+  const rpPreview = previewRP(dueDate ?? null, streak)
+  const happinessPreview = previewHappinessDelta(dueDate ?? null)
 
   const handleComplete = async () => {
     if (!onComplete || completing) return
@@ -176,21 +159,21 @@ export function AssignmentCard({ assignment, isPinned, isSelected, onPin, onSele
                 {assignment.plannable.points_possible} Points
               </span>
             )}
-            {!done && (
-              <>
-                <span
-                  className="app-rp-badge"
-                  title={`Reward Points earned on completion. Base: ${rpBase} RP (+0–10 streak bonus on top)`}
-                >
-                  +{rpBase} RP
-                </span>
-                <span
-                  className="app-happiness-badge"
-                  title="Pet happiness gained on completion"
-                >
-                  +{happinessGain}% ❤️
-                </span>
-              </>
+            {!done && rpPreview > 0 && (
+              <span
+                className="app-rp-badge"
+                title="Reward Points earned on completion (base + streak bonus)"
+              >
+                +{rpPreview} RP
+              </span>
+            )}
+            {!done && happinessPreview > 0 && (
+              <span
+                className="app-happiness-badge"
+                title="Pet happiness gained on completion"
+              >
+                +{happinessPreview}% ❤️
+              </span>
             )}
           </div>
         </div>
