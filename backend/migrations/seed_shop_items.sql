@@ -20,7 +20,7 @@ INSERT INTO shop_items (name, description, cost, image_url, active) VALUES
 ('Beret', 'An artistic French beret', 55, NULL, true),
 ('Sombrero', 'A festive Mexican sombrero', 90, NULL, true),
 ('Fedora', 'A stylish detective fedora', 75, NULL, true),
-('Halo', 'A glowing angelic halo', 300, NULL, true),
+('Halo', 'A glowing angelic halo', 300, '/shop/halo.png', true),
 ('Devil Horns', 'Mischievous little horns', 65, NULL, true),
 ('Bunny Ears', 'Cute floppy bunny ears', 50, NULL, true),
 
@@ -35,7 +35,7 @@ INSERT INTO shop_items (name, description, cost, image_url, active) VALUES
 ('Headphones', 'Oversized DJ headphones', 80, NULL, true),
 ('Glasses', 'Nerdy round glasses', 40, NULL, true),
 ('Eye Patch', 'A pirate eye patch', 25, NULL, true),
-('Mustache', 'A curly fake mustache', 15, NULL, true),
+('Mustache', 'A curly fake mustache', 15, '/shop/mustache.png', true),
 ('Beard', 'A magnificent fake beard', 20, NULL, true),
 ('Wings', 'Sparkly fairy wings', 200, NULL, true),
 ('Cape', 'A superhero cape', 120, NULL, true),

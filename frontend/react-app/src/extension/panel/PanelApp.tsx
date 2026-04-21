@@ -45,6 +45,8 @@ export function PanelApp() {
   return (
     <div className="cp-panel">
       <Dashboard
+        showTopPet={true}
+        topPetStats={data.petStats}
         assignments={data.assignments}
         announcements={data.announcements}
         loading={data.loading}
