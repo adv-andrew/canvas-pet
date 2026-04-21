@@ -50,6 +50,7 @@ export async function completeAssignment(
   canvasUserId: string,
   institutionUrl: string,
   assignmentId: number,
+  dueDate?: string | null,
 ) {
   const { data, error } = await getSupabaseAdmin()
     .from('saved_assignments')
@@ -60,6 +61,7 @@ export async function completeAssignment(
         assignment_id: assignmentId,
         plannable_type: 'assignment',
         completed_at: new Date().toISOString(),
+        ...(dueDate !== undefined ? { due_date: dueDate } : {}),
       },
       { onConflict: 'canvas_user_id,institution_url,assignment_id' },
     )
