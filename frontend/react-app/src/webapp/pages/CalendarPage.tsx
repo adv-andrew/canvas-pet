@@ -9,7 +9,8 @@ export function CalendarPage() {
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.data?.type === 'CP_CANVAS_DATA') {
-        const items = (event.data.items ?? []) as CanvasPlannerItem[]
+        const payload = event.data.payload as { items: CanvasPlannerItem[] }
+        const items = payload?.items ?? []
         const tracked: TrackedAssignment[] = items.map((item) => ({
           ...item,
           isSaved: false,
@@ -41,12 +42,11 @@ export function CalendarPage() {
 
   if (assignments.length === 0) {
     return (
-      <div className="page-content">
+      <div className="calendar-page">
         <h2 className="page-title">Calendar</h2>
         <div className="canvas-not-linked-banner">
           Open a Canvas tab with the extension installed to see your assignments here.
         </div>
-        <Calendar assignments={[]} />
       </div>
     )
   }

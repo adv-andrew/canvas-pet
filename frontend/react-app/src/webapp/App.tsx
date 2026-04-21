@@ -42,6 +42,7 @@ function ProtectedLayout() {
   const navigate = useNavigate()
   const [checking, setChecking] = useState(true)
   const [rewardPoints, setRewardPoints] = useState(0)
+  const [happiness, setHappiness] = useState(0)
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
@@ -54,7 +55,10 @@ function ProtectedLayout() {
           apiClientGetPetStats(token),
           fetch(`${BACKEND_URL}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
         ])
-        if (stats.status === 'fulfilled') setRewardPoints(stats.value.reward_points)
+        if (stats.status === 'fulfilled') {
+          setRewardPoints(stats.value.reward_points)
+          setHappiness(stats.value.happiness_score)
+        }
         if (adminRes.status === 'fulfilled' && adminRes.value.ok) setIsAdmin(true)
         setChecking(false)
       }
@@ -71,7 +75,7 @@ function ProtectedLayout() {
 
   return (
     <>
-      <NavBar rewardPoints={rewardPoints} isAdmin={isAdmin} />
+      <NavBar rewardPoints={rewardPoints} happiness={happiness} isAdmin={isAdmin} />
       <Outlet />
     </>
   )
