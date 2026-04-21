@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { decayHappinessForOverdue } from '../../../../services/happinessService'
+import { decayHappinessForOverdue } from '../../../services/happinessService'
 
 const CRON_SECRET = process.env.CRON_SECRET
 
