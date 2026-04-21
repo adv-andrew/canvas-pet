@@ -301,6 +301,7 @@ export function Calendar({ assignments, onSavePins }: Readonly<Props>) {
     setSelectedDayKey(dayKey(today))
     setPreviewId(null)
   }
+  const goToToday = () => { setYear(today.getFullYear()); setMonth(today.getMonth()) }
 
   return (
     <div className="calendar-page">

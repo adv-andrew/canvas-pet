@@ -20,6 +20,23 @@ export function PanelApp() {
     return () => window.removeEventListener('message', handler)
   }, [])
 
+  // chrome-extension iframes can't open new tabs via target="_blank" even with
+  // allow="popups" — intercept all such clicks and route through the content script,
+  // which calls chrome.tabs.create to open the URL in a new tab reliably.
+  useEffect(() => {
+    // ancestorOrigins[0] is the direct parent's origin (Canvas page) — Chrome-only,
+    // safe here since this panel only runs as a Chrome extension iframe.
+    const parentOrigin = location.ancestorOrigins[0] ?? '*'
+    const handler = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a')
+      if (!anchor?.href || anchor.target !== '_blank') return
+      e.preventDefault()
+      window.parent.postMessage({ type: 'OPEN_URL', url: anchor.href }, parentOrigin)
+    }
+    document.addEventListener('click', handler, true)
+    return () => document.removeEventListener('click', handler, true)
+  }, [])
+
   const setAndBroadcast = (m: PanelMode) => {
     setMode(m)
     const parentOrigin = location.ancestorOrigins[0] ?? '*'
