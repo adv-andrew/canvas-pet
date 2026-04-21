@@ -14,6 +14,7 @@ interface Props {
   announcements: CanvasAnnouncement[]
   loading: boolean
   error: string | null
+  institutionUrl?: string | null
   pinnedIds?: Set<number>
   onTogglePin?: (id: number) => void
   onSavePins?: () => Promise<void>
@@ -150,12 +151,13 @@ interface GroupSectionProps {
   pinnedIds: Set<number>
   selectedId: number | null
   streak: number
+  institutionUrl?: string | null
   onTogglePin: (id: number) => void
   onSelect: (id: number) => void
   onComplete?: (id: number) => Promise<{ points_earned: number } | void>
 }
 
-function GroupSection({ title, items, pinnedIds, selectedId, streak, onTogglePin, onSelect, onComplete }: Readonly<GroupSectionProps>) {
+function GroupSection({ title, items, pinnedIds, selectedId, streak, institutionUrl, onTogglePin, onSelect, onComplete }: Readonly<GroupSectionProps>) {
   if (items.length === 0) return null
   return (
     <section className="group-section">
@@ -167,6 +169,7 @@ function GroupSection({ title, items, pinnedIds, selectedId, streak, onTogglePin
           isPinned={pinnedIds.has(a.plannable_id)}
           isSelected={selectedId === a.plannable_id}
           streak={streak}
+          institutionUrl={institutionUrl ?? undefined}
           onPin={() => onTogglePin(a.plannable_id)}
           onSelect={() => onSelect(a.plannable_id)}
           onComplete={onComplete}
@@ -183,6 +186,7 @@ export function Dashboard({
   announcements,
   loading,
   error,
+  institutionUrl,
   pinnedIds: externalPinnedIds,
   onTogglePin,
   onSavePins,
@@ -420,6 +424,7 @@ export function Dashboard({
                       isPinned={true}
                       isSelected={selectedId === a.plannable_id}
                       streak={petStreak}
+                      institutionUrl={institutionUrl ?? undefined}
                       onPin={() => handleTogglePin(a.plannable_id)}
                       onSelect={() => handleSelect(a.plannable_id)}
                       onComplete={onComplete}
@@ -427,11 +432,11 @@ export function Dashboard({
                   ))}
                 </section>
               )}
-              <GroupSection title="Past Due" items={groups.overdue} pinnedIds={pinnedIds} selectedId={selectedId} streak={petStreak} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
-              <GroupSection title="Today" items={groups.dueToday} pinnedIds={pinnedIds} selectedId={selectedId} streak={petStreak} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
-              <GroupSection title="This Week" items={groups.thisWeek} pinnedIds={pinnedIds} selectedId={selectedId} streak={petStreak} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
-              <GroupSection title="This Month" items={groups.thisMonth} pinnedIds={pinnedIds} selectedId={selectedId} streak={petStreak} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
-              <GroupSection title="Later" items={groups.later} pinnedIds={pinnedIds} selectedId={selectedId} streak={petStreak} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
+              <GroupSection title="Past Due" items={groups.overdue} pinnedIds={pinnedIds} selectedId={selectedId} streak={petStreak} institutionUrl={institutionUrl} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
+              <GroupSection title="Today" items={groups.dueToday} pinnedIds={pinnedIds} selectedId={selectedId} streak={petStreak} institutionUrl={institutionUrl} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
+              <GroupSection title="This Week" items={groups.thisWeek} pinnedIds={pinnedIds} selectedId={selectedId} streak={petStreak} institutionUrl={institutionUrl} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
+              <GroupSection title="This Month" items={groups.thisMonth} pinnedIds={pinnedIds} selectedId={selectedId} streak={petStreak} institutionUrl={institutionUrl} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
+              <GroupSection title="Later" items={groups.later} pinnedIds={pinnedIds} selectedId={selectedId} streak={petStreak} institutionUrl={institutionUrl} onTogglePin={handleTogglePin} onSelect={handleSelect} onComplete={onComplete} />
             </>
           )}
         </>

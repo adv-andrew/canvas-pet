@@ -36,6 +36,7 @@ export function PanelApp() {
         announcements={data.announcements}
         loading={data.loading}
         error={data.error}
+        institutionUrl={data.institutionUrl}
         pinnedIds={data.pinnedIds}
         onTogglePin={data.togglePin}
         onClearPins={data.clearPins}

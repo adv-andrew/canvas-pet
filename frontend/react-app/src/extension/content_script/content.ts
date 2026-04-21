@@ -60,6 +60,8 @@ async function fetchCanvasData() {
       return r.json()
     }),
   ])
+  const origin = globalThis.location.origin
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const announcements = (stream as any[]).filter((a) => a.type === 'Announcement').map((a: any) => {
     const url: string | undefined = a.html_url
@@ -87,16 +89,25 @@ async function fetchCanvasData() {
 
   console.log(`[CP] past:${(pastItems as any[]).length} upcoming:${(upcomingItems as any[]).length} merged:${mergedItems.length}`)
 
-  // Strip announcement-type planner items and resolve any relative plannable.html_url values
-  // to absolute URLs. The Canvas planner API returns paths like /courses/123/assignments/456
-  // without the institution domain, which breaks links in the web app and chrome.tabs.create.
-  const origin = globalThis.location.origin
+  // Strip announcement-type planner items and ensure every item has an absolute html_url.
+  // The Canvas planner API sometimes omits plannable.html_url or returns a relative path;
+  // in either case we construct a canonical absolute URL from the known course/item IDs.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const filteredItems = mergedItems.filter((item: any) => item.plannable_type !== 'announcement').map((item: any) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const url: string | undefined = item.plannable?.html_url
+    let url: string | undefined = item.plannable?.html_url
     if (url && !url.startsWith('http')) {
-      return { ...item, plannable: { ...item.plannable, html_url: `${origin}${url}` } }
+      url = `${origin}${url}`
+    } else if (!url && item.course_id != null) {
+      // Canvas didn't provide html_url — construct one from known identifiers
+      let typePath: string
+      if (item.plannable_type === 'quiz') typePath = 'quizzes'
+      else if (item.plannable_type === 'discussion_topic') typePath = 'discussion_topics'
+      else typePath = 'assignments'
+      url = `${origin}/courses/${item.course_id}/${typePath}/${item.plannable_id}`
+    }
+    if (url !== item.plannable?.html_url) {
+      return { ...item, plannable: { ...item.plannable, html_url: url ?? '' } }
     }
     return item
   })
@@ -370,8 +381,13 @@ async function init() {
           iframe?.contentWindow?.postMessage({ type: 'CANVAS_ERROR', error: err.message }, '*')
         })
     } else if (e.data?.type === 'OPEN_URL') {
-      const url = e.data.url as string
-      if (url?.startsWith('http')) chrome.tabs.create({ url })
+      const rawUrl = e.data.url as string
+      if (!rawUrl) return
+      // Resolve relative paths using the Canvas page origin so chrome.tabs.create always
+      // receives an absolute URL (the panel iframe has a chrome-extension:// base URL
+      // which makes browser-resolved anchor.href incorrect for Canvas relative paths).
+      const url = rawUrl.startsWith('http') ? rawUrl : `${location.origin}${rawUrl}`
+      chrome.tabs.create({ url }).catch(() => {})
     } else if (e.data?.type === 'GENERATE_CANVAS_TOKEN') {
       console.log('[CP content] GENERATE_CANVAS_TOKEN received from panel iframe')
       generateCanvasToken(e.data.password as string | undefined).then((result) => {
