@@ -7,6 +7,32 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string
 // Callers (popup/lib/api.ts, webapp/lib/api.ts) are responsible for
 // obtaining the token from their respective Supabase client.
 
+// Deduplicates concurrent identical GET requests (same URL + token).
+// React StrictMode double-mounts every component in development, firing each
+// useEffect twice. Without this, switching pages produces 2× network calls.
+const inflightGets = new Map<string, Promise<unknown>>()
+
+function getDeduped<T>(url: string, token: string, transform?: (r: Response) => Promise<T>): Promise<T> {
+  const key = `${url}|${token}`
+  const existing = inflightGets.get(key)
+  if (existing) return existing as Promise<T>
+
+  const defaultTransform = async (r: Response): Promise<T> => {
+    if (!r.ok) {
+      const { error } = (await r.json()) as { error: string }
+      throw new Error(error)
+    }
+    return r.json() as Promise<T>
+  }
+
+  const p = fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    .then(transform ?? defaultTransform)
+    .finally(() => inflightGets.delete(key))
+
+  inflightGets.set(key, p)
+  return p
+}
+
 export async function apiClientExtensionAuth(params: {
   canvas_user_id: string
   institution_url: string
@@ -164,15 +190,8 @@ export interface MeResponse {
   snapshot_available?: boolean
 }
 
-export async function apiClientGetMe(token: string): Promise<MeResponse> {
-  const res = await fetch(`${BACKEND_URL}/api/auth/profile`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) {
-    const { error } = (await res.json()) as { error: string }
-    throw new Error(error)
-  }
-  return res.json() as Promise<MeResponse>
+export function apiClientGetMe(token: string): Promise<MeResponse> {
+  return getDeduped<MeResponse>(`${BACKEND_URL}/api/auth/profile`, token)
 }
 
 export async function apiClientStoreCanvasToken(
@@ -227,15 +246,8 @@ export async function apiClientPushCanvasSnapshot(
   }
 }
 
-export async function apiClientGetCanvasSnapshot(token: string): Promise<CanvasSnapshotResponse> {
-  const res = await fetch(`${BACKEND_URL}/api/canvas-snapshot`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) {
-    const { error } = (await res.json()) as { error: string }
-    throw new Error(error)
-  }
-  return res.json() as Promise<CanvasSnapshotResponse>
+export function apiClientGetCanvasSnapshot(token: string): Promise<CanvasSnapshotResponse> {
+  return getDeduped<CanvasSnapshotResponse>(`${BACKEND_URL}/api/canvas-snapshot`, token)
 }
 
 export interface PetStats {
@@ -244,15 +256,8 @@ export interface PetStats {
   reward_points: number
 }
 
-export async function apiClientGetPetStats(token: string): Promise<PetStats> {
-  const res = await fetch(`${BACKEND_URL}/api/pet`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) {
-    const { error } = (await res.json()) as { error: string }
-    throw new Error(error)
-  }
-  return res.json() as Promise<PetStats>
+export function apiClientGetPetStats(token: string): Promise<PetStats> {
+  return getDeduped<PetStats>(`${BACKEND_URL}/api/pet`, token)
 }
 
 export interface CompleteAssignmentResponse {
@@ -268,8 +273,10 @@ export async function apiClientCompleteAssignment(
   assignmentId: number,
   institutionUrl: string,
   token: string,
+  dueDate?: string | null,
 ): Promise<CompleteAssignmentResponse> {
-  const url = `${BACKEND_URL}/api/assignments/${assignmentId}/complete?institution_url=${encodeURIComponent(institutionUrl)}`
+  const dueDateParam = dueDate ? `&due_date=${encodeURIComponent(dueDate)}` : ''
+  const url = `${BACKEND_URL}/api/assignments/${assignmentId}/complete?institution_url=${encodeURIComponent(institutionUrl)}${dueDateParam}`
   const res = await fetch(url, {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${token}` },
@@ -289,16 +296,12 @@ export interface ShopItem {
   image_url: string | null
 }
 
-export async function apiClientGetShopItems(token: string): Promise<ShopItem[]> {
-  const res = await fetch(`${BACKEND_URL}/api/shop`, {
-    headers: { Authorization: `Bearer ${token}` },
+export function apiClientGetShopItems(token: string): Promise<ShopItem[]> {
+  return getDeduped<ShopItem[]>(`${BACKEND_URL}/api/shop`, token, async (r) => {
+    if (!r.ok) { const { error } = (await r.json()) as { error: string }; throw new Error(error) }
+    const { data } = (await r.json()) as { data: ShopItem[] }
+    return data
   })
-  if (!res.ok) {
-    const { error } = (await res.json()) as { error: string }
-    throw new Error(error)
-  }
-  const { data } = (await res.json()) as { data: ShopItem[] }
-  return data
 }
 
 export interface OwnedItem {
@@ -312,16 +315,12 @@ export interface OwnedItem {
   }
 }
 
-export async function apiClientGetOwnedItems(token: string): Promise<OwnedItem[]> {
-  const res = await fetch(`${BACKEND_URL}/api/shop/owned`, {
-    headers: { Authorization: `Bearer ${token}` },
+export function apiClientGetOwnedItems(token: string): Promise<OwnedItem[]> {
+  return getDeduped<OwnedItem[]>(`${BACKEND_URL}/api/shop/owned`, token, async (r) => {
+    if (!r.ok) { const { error } = (await r.json()) as { error: string }; throw new Error(error) }
+    const { data } = (await r.json()) as { data: OwnedItem[] }
+    return data
   })
-  if (!res.ok) {
-    const { error } = (await res.json()) as { error: string }
-    throw new Error(error)
-  }
-  const { data } = (await res.json()) as { data: OwnedItem[] }
-  return data
 }
 
 export interface PurchaseResponse {
