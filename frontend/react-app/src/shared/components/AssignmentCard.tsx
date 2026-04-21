@@ -9,6 +9,7 @@ interface Props {
   isPinned: boolean
   isSelected?: boolean
   streak?: number
+  institutionUrl?: string
   onPin: () => void
   onSelect?: () => void
   onRemove?: () => void
@@ -57,10 +58,16 @@ function isCompleted(a: TrackedAssignment): boolean {
 function getTypeIcon(type: string): string {
   if (type === 'quiz') return '📋'
   if (type === 'discussion_topic') return '💬'
-  return '📝'
+  return '📝' //Assignment
 }
 
-export function AssignmentCard({ assignment, isPinned, isSelected, streak = 0, onPin, onSelect, onRemove, onComplete, courseColor }: Readonly<Props>) {
+function getTypePath(type: string): string {
+  if (type === 'quiz') return 'quizzes'
+  if (type === 'discussion_topic') return 'discussion_topics'
+  return 'assignments'
+}
+
+export function AssignmentCard({ assignment, isPinned, isSelected, streak = 0, institutionUrl, onPin, onSelect, onRemove, onComplete, courseColor }: Readonly<Props>) {
   const [completing, setCompleting] = useState(false)
   const [pointsEarned, setPointsEarned] = useState<number | null>(null)
 
@@ -130,15 +137,13 @@ export function AssignmentCard({ assignment, isPinned, isSelected, streak = 0, o
         </div>
       </div>
       <div className="calendar-detail-body">
-        {assignment.plannable.html_url ? (
-          <a
+          <button
+            type="button"
             className="calendar-detail-title"
-            href={assignment.plannable.html_url}
-            rel="noreferrer"
             onClick={(e) => {
-              e.preventDefault()
               e.stopPropagation()
-              const url = assignment.plannable.html_url!
+              if (!institutionUrl || assignment.course_id == null) return
+              const url = `${institutionUrl}/courses/${assignment.course_id}/${getTypePath(assignment.plannable_type)}/${assignment.plannable_id}`
               if (typeof chrome !== 'undefined' && chrome.tabs) {
                 void chrome.tabs.create({ url })
               } else {
@@ -147,10 +152,7 @@ export function AssignmentCard({ assignment, isPinned, isSelected, streak = 0, o
             }}
           >
             {assignment.plannable.title}
-          </a>
-        ) : (
-          <span className="calendar-detail-title">{assignment.plannable.title}</span>
-        )}
+          </button>
         <div className="calendar-detail-footer">
           <StatusBadge submissions={assignment.submissions} isAppCompleted={!!assignment.isCompleted} />
           <div className="assignment-point-stats">

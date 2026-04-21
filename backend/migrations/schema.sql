@@ -17,19 +17,28 @@ create extension if not exists "pgcrypto";
 -- ---------------------------------------------------------------------------
 
 create table if not exists canvas_users (
-  id               uuid        primary key default gen_random_uuid(),
-  canvas_user_id   text        unique not null,
-  institution_url  text        not null,
-  email            text,
-  display_name     text,
-  happiness_score  integer     not null default 80 check (happiness_score >= 0 and happiness_score <= 100),
-  reward_points    integer     not null default 0  check (reward_points >= 0),
-  role             text        not null default 'student' check (role in ('student', 'admin')),
-  streak           integer     not null default 0  check (streak >= 0),
-  canvas_token     text,             -- see v3_add_personal_access_token.sql
-  created_at       timestamptz not null default now(),
-  updated_at       timestamptz not null default now()
+  id                  uuid        primary key default gen_random_uuid(),
+  canvas_user_id      text        unique not null,
+  institution_url     text        not null,
+  email               text,
+  display_name        text,
+  happiness_score     integer     not null default 80 check (happiness_score >= 0 and happiness_score <= 100),
+  reward_points       integer     not null default 0  check (reward_points >= 0),
+  role                text        not null default 'student' check (role in ('student', 'admin')),
+  streak              integer     not null default 0  check (streak >= 0),
+  canvas_token        text,
+  web_user_id         uuid        unique references auth.users(id) on delete set null,
+  web_display_name    text,
+  web_email           text,
+  privacy_consent_at  timestamptz,
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
 );
+
+comment on column canvas_users.privacy_consent_at is
+  'Timestamp when the user accepted the Privacy Policy. '
+  'NULL for accounts created before v8 or pending consent. '
+  'Set by the backend on sign-up or first Canvas link.';
 
 -- Composite uniqueness: one canvas account per institution per Supabase user
 create unique index if not exists canvas_users_canvas_user_id_institution_url_idx
@@ -67,12 +76,39 @@ create table if not exists saved_assignments (
   constraint saved_assignments_unique unique (canvas_user_id, institution_url, assignment_id)
 );
 
+comment on column saved_assignments.title is
+  'Assignment title cached from Canvas at save time. '
+  'Stored with user consent per the Privacy Policy. '
+  'Not a grade or submission record — covered by FERPA minimal storage policy.';
+
+comment on column saved_assignments.due_date is
+  'Assignment due date cached from Canvas at save time. '
+  'Used to compute reward point tiers. Not a grade or submission record.';
+
+-- ---------------------------------------------------------------------------
+-- tasks
+-- ---------------------------------------------------------------------------
+
+create table if not exists tasks (
+  id              uuid        primary key default gen_random_uuid(),
+  canvas_user_id  uuid        not null references canvas_users(id) on delete cascade,
+  assignment_id   uuid        not null,
+  course_id       uuid        not null,
+  title           text        not null,
+  description     text,
+  due_date        timestamptz,
+  completed       boolean     not null default false,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------------
 
 alter table canvas_users     enable row level security;
 alter table saved_assignments enable row level security;
+alter table tasks             enable row level security;
 
 -- canvas_users: each Supabase Auth user can only see and modify their own row.
 -- happiness_score and reward_points are excluded from client UPDATE via policy
@@ -99,6 +135,7 @@ create policy "canvas_users_update_own"
   );
 
 -- saved_assignments: users may only touch rows belonging to their Canvas account.
+-- INSERT requires privacy consent to be recorded (v8).
 
 create policy "saved_assignments_select_own"
   on saved_assignments for select
@@ -111,8 +148,10 @@ create policy "saved_assignments_select_own"
 create policy "saved_assignments_insert_own"
   on saved_assignments for insert
   with check (
-    canvas_user_id in (
-      select canvas_user_id from canvas_users where id = auth.uid()
+    canvas_user_id = (
+      select canvas_user_id from canvas_users
+      where id = auth.uid()
+        and privacy_consent_at is not null
     )
   );
 
