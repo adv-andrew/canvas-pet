@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient'
 import { apiClientGetMe, apiClientLinkCanvas, apiClientGetCanvasSnapshot, apiClientSavePins, apiClientFetchPinnedIds, apiClientFetchSavedIds, apiClientCompleteAssignment } from '../../shared/lib/apiClient'
-import type { MeResponse, CanvasSnapshotResponse } from '../../shared/lib/apiClient'
+import type { MeResponse, CanvasSnapshotResponse, CompleteAssignmentResponse } from '../../shared/lib/apiClient'
 export type { MeResponse, CanvasSnapshotResponse } from '../../shared/lib/apiClient'
 
 async function getToken(): Promise<string> {
@@ -37,7 +37,6 @@ export async function apiWebFetchSavedIds(institutionUrl: string): Promise<{ sav
   return apiClientFetchSavedIds(institutionUrl, await getToken())
 }
 
-export async function apiWebCompleteAssignment(assignmentId: number, institutionUrl: string): Promise<{ points_earned: number }> {
-  const res = await apiClientCompleteAssignment(assignmentId, institutionUrl, await getToken())
-  return { points_earned: res.points_earned }
+export async function apiWebCompleteAssignment(assignmentId: number, institutionUrl: string, dueDate?: string | null): Promise<CompleteAssignmentResponse> {
+  return apiClientCompleteAssignment(assignmentId, institutionUrl, await getToken(), dueDate)
 }

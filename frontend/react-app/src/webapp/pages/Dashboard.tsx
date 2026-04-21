@@ -3,6 +3,7 @@ import { apiGetMe, apiLinkCanvas, apiWebSavePins, apiWebFetchPinnedIds, apiWebFe
 import type { MeResponse } from '../lib/api'
 import type { CanvasPlannerItem, CanvasAnnouncement, TrackedAssignment } from '../../shared/types/canvas'
 import { Dashboard as SharedDashboard } from '../../shared/components/Dashboard'
+import { usePetStats } from '../lib/petStatsContext'
 
 export function Dashboard() {
   const [me, setMe] = useState<MeResponse | null>(null)
@@ -79,12 +80,16 @@ export function Dashboard() {
     await apiWebSavePins([...pinnedIds], institutionUrl)
   }, [institutionUrl, pinnedIds])
 
+  const { updateStats } = usePetStats()
+
   const completeAssignment = useCallback(async (assignmentId: number): Promise<{ points_earned: number } | void> => {
     if (!institutionUrl) return
-    const result = await apiWebCompleteAssignment(assignmentId, institutionUrl)
+    const dueDate = items.find((i) => i.plannable_id === assignmentId)?.plannable.due_at ?? null
+    const result = await apiWebCompleteAssignment(assignmentId, institutionUrl, dueDate)
     setCompletedIds((prev) => new Set([...prev, assignmentId]))
+    updateStats({ happiness_score: result.happiness_score, streak: result.streak, reward_points: result.reward_points })
     return result
-  }, [institutionUrl])
+  }, [institutionUrl, items, updateStats])
 
   const hasData = items.length > 0 || announcements.length > 0
   const assignments: TrackedAssignment[] = items.map((item) => ({
