@@ -185,9 +185,10 @@ function applyModeStyles(mode: 'sidebar' | 'fullscreen' | 'minimized') {
       top: '0',
       right: '0',
       left: 'auto',
-      width: `${panelWidth}px`,
+      width: `min(${panelWidth}px, 100vw)`,
       height: '100vh',
       zIndex: '9999',
+      overflow: 'hidden',
     })
     restoreTab.style.display = 'none'
     applyBodyMargin(panelWidth)
@@ -238,6 +239,7 @@ async function init() {
   iframe = document.createElement('iframe')
   iframe.src = PANEL_URL
   iframe.id = 'cp-frame'
+  iframe.allow = 'popups'  // required for target="_blank" links inside the chrome-extension iframe
   iframe.style.cssText = 'width:100%;height:100%;border:none;'
   container.appendChild(iframe)
 
@@ -351,6 +353,9 @@ async function init() {
         .catch((err: Error) => {
           iframe?.contentWindow?.postMessage({ type: 'CANVAS_ERROR', error: err.message }, '*')
         })
+    } else if (e.data?.type === 'OPEN_URL') {
+      const url = e.data.url as string
+      if (url?.startsWith('http')) chrome.tabs.create({ url, active: false })
     } else if (e.data?.type === 'GENERATE_CANVAS_TOKEN') {
       console.log('[CP content] GENERATE_CANVAS_TOKEN received from panel iframe')
       generateCanvasToken(e.data.password as string | undefined).then((result) => {
