@@ -1002,16 +1002,19 @@ body {
 }
 
 .pixel-pet-animate {
-  animation: pet-bounce 2s ease-in-out infinite;
+  animation: pet-bounce 4s ease-in-out infinite;
 }
 
 .pixel-pet-animate.pixel-pet-ecstatic {
-  animation: pet-bounce-fast 1s ease-in-out infinite;
+  animation: pet-bounce-fast 5s ease-in-out infinite;
 }
 
-.pixel-pet-animate.pixel-pet-sad,
+.pixel-pet-animate.pixel-pet-sad {
+  animation: pet-sway 6s ease-in-out infinite;
+}
+
 .pixel-pet-animate.pixel-pet-miserable {
-  animation: pet-sway 3s ease-in-out infinite;
+  animation: pet-sway 6s ease-in-out infinite;
 }
 
 @keyframes pet-bounce {
@@ -1020,25 +1023,25 @@ body {
 }
 
 @keyframes pet-bounce-fast {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  25% { transform: translateY(-8px) rotate(2deg); }
-  50% { transform: translateY(0) rotate(-2deg); }
-  75% { transform: translateY(-8px) rotate(2deg); }
+  0%, 100% { transform: translateY(-8px) rotate(3deg); }
+  25% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(-3deg); }
+  75% { transform: translateY(0) rotate(0deg); }
 }
 
 @keyframes pet-sway {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(2px) rotate(-3deg); }
+  0%, 100% { transform: translateY(2px) rotate(-3deg); }
+  50% { transform: translateY(2px) rotate(3deg); }
 }
 
 .pixel-pet .sparkle {
   fill: #fbbf24;
-  animation: sparkle-pulse 0.8s ease-in-out infinite;
+  animation: sparkle-pulse 1.6s ease-in-out infinite;
 }
 
 .pixel-pet .sparkle-1 { animation-delay: 0s; }
-.pixel-pet .sparkle-2 { animation-delay: 0.2s; }
-.pixel-pet .sparkle-3 { animation-delay: 0.4s; }
+.pixel-pet .sparkle-2 { animation-delay: 0.4s; }
+.pixel-pet .sparkle-3 { animation-delay: 0.8s; }
 
 @keyframes sparkle-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -1047,6 +1050,10 @@ body {
 
 .pixel-pet .sweat-drop {
   animation: sweat-fall 1.5s ease-in infinite;
+}
+
+.pixel-pet.pixel-pet-miserable .sweat-drop {
+  animation: sweat-fall 3s ease-in infinite;
 }
 
 @keyframes sweat-fall {
@@ -1135,6 +1142,13 @@ body {
 }
 .calendar-detail-title {
   display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   color: #1d4ed8;
@@ -1147,6 +1161,11 @@ body {
 }
 .calendar-detail-title:hover {
   text-decoration: underline;
+}
+.calendar-detail-title:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 .calendar-detail-footer {
   display: flex;

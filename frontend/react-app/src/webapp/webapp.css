@@ -1142,8 +1142,8 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  font-size: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
   font-weight: 500;
 }
 .calendar-detail-course {
@@ -1153,25 +1153,39 @@ body {
   white-space: nowrap;
 }
 .calendar-detail-due {
-  font-size: 11px;
+  font-size: 12px;
   opacity: 0.85;
   white-space: nowrap;
 }
 .calendar-detail-body {
-  padding: 8px 10px;
+  padding: 10px 12px;
 }
 .calendar-detail-title {
   display: block;
-  font-size: 13px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
+  font-size: 14px;
   font-weight: 600;
   color: #1d4ed8;
   text-decoration: none;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   line-height: 1.4;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  cursor: pointer;
 }
 .calendar-detail-title:hover {
   text-decoration: underline;
-  color: #1d4ed8;
+}
+.calendar-detail-title:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 .calendar-detail-footer {
   display: flex;
