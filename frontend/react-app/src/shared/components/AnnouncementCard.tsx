@@ -43,8 +43,16 @@ export function AnnouncementCard({ announcement }: Readonly<Props>) {
         <a
           className="calendar-detail-title"
           href={announcement.html_url}
-          target="_blank"
           rel="noreferrer"
+          onClick={(e) => {
+            e.preventDefault()
+            const url = announcement.html_url
+            if (typeof chrome !== 'undefined' && chrome.tabs) {
+              void chrome.tabs.create({ url })
+            } else {
+              window.open(url, '_blank', 'noopener,noreferrer')
+            }
+          }}
         >
           {announcement.title}
         </a>

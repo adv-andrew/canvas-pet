@@ -61,7 +61,13 @@ async function fetchCanvasData() {
     }),
   ])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const announcements = (stream as any[]).filter((a) => a.type === 'Announcement')
+  const announcements = (stream as any[]).filter((a) => a.type === 'Announcement').map((a: any) => {
+    const url: string | undefined = a.html_url
+    if (url && !url.startsWith('http')) {
+      return { ...a, html_url: `${origin}${url}` }
+    }
+    return a
+  })
 
   // Merge past (reversed to restore chronological order) + upcoming, deduplicating
   // items that fall on today and therefore appear in both fetches.
@@ -81,9 +87,19 @@ async function fetchCanvasData() {
 
   console.log(`[CP] past:${(pastItems as any[]).length} upcoming:${(upcomingItems as any[]).length} merged:${mergedItems.length}`)
 
-  // Strip planner items that are announcement-type — those belong in the announcements tab.
+  // Strip announcement-type planner items and resolve any relative plannable.html_url values
+  // to absolute URLs. The Canvas planner API returns paths like /courses/123/assignments/456
+  // without the institution domain, which breaks links in the web app and chrome.tabs.create.
+  const origin = globalThis.location.origin
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const filteredItems = mergedItems.filter((item: any) => item.plannable_type !== 'announcement')
+  const filteredItems = mergedItems.filter((item: any) => item.plannable_type !== 'announcement').map((item: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const url: string | undefined = item.plannable?.html_url
+    if (url && !url.startsWith('http')) {
+      return { ...item, plannable: { ...item.plannable, html_url: `${origin}${url}` } }
+    }
+    return item
+  })
   const data = {
     items: filteredItems,
     announcements,
@@ -355,7 +371,7 @@ async function init() {
         })
     } else if (e.data?.type === 'OPEN_URL') {
       const url = e.data.url as string
-      if (url?.startsWith('http')) chrome.tabs.create({ url, active: false })
+      if (url?.startsWith('http')) chrome.tabs.create({ url })
     } else if (e.data?.type === 'GENERATE_CANVAS_TOKEN') {
       console.log('[CP content] GENERATE_CANVAS_TOKEN received from panel iframe')
       generateCanvasToken(e.data.password as string | undefined).then((result) => {

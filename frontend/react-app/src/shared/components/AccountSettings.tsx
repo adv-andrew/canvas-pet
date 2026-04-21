@@ -89,7 +89,19 @@ export function AccountSettings({ supabaseClient, onSignOut, hideTitle, hideAuth
       {hideAuthSections && (
         <p className="account-manage-note">
           To manage sign-in methods (Google, password),{' '}
-          <a href={WEBAPP_URL + '/account'} target="_blank" rel="noreferrer">
+          <a
+            href={WEBAPP_URL + '/account'}
+            rel="noreferrer"
+            onClick={(e) => {
+              e.preventDefault()
+              const url = WEBAPP_URL + '/account'
+              if (typeof chrome !== 'undefined' && chrome.tabs) {
+                void chrome.tabs.create({ url })
+              } else {
+                window.open(url, '_blank', 'noopener,noreferrer')
+              }
+            }}
+          >
             open the Canvas Pet web app
           </a>
           .
