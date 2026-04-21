@@ -424,7 +424,7 @@ export function Calendar({ assignments, onSavePins }: Readonly<Props>) {
           </div>
           {sidePanelItems.length === 0 ? (
             <div className="calendar-side-empty">
-              Click a date number or assignment to preview. Double-click an assignment or the press pin icon to pin it.
+              Click on a date number or assignment to preview. Double-click on an assignment or press its pin icon to pin it.
             </div>
           ) : (
             sidePanelItems.map(({ a, isPinned }) => (
