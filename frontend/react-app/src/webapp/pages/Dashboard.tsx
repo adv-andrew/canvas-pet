@@ -121,6 +121,7 @@ export function Dashboard() {
         announcements={announcements}
         loading={loading}
         error={null}
+        institutionUrl={institutionUrl}
         topPetStats={stats ?? undefined}
         pinnedIds={pinnedIds}
         onTogglePin={togglePin}
