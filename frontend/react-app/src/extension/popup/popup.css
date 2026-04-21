@@ -826,3 +826,105 @@ body {
   20% { opacity: 1; }
   100% { opacity: 0; transform: translateY(10px); }
 }
+
+/* ─── Shared AssignmentCard (new style) ────────────────────────── */
+.assignment-card.pinned {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.assignment-card.preview {
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.calendar-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.calendar-detail-course {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.calendar-detail-due {
+  font-size: 11px;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+.calendar-detail-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.calendar-pin-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 13px;
+  opacity: 0.5;
+  line-height: 1;
+}
+.calendar-pin-btn:hover,
+.calendar-pin-btn.pinned {
+  opacity: 1;
+}
+.calendar-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0.5;
+}
+.calendar-remove-btn:hover {
+  opacity: 1;
+}
+.calendar-complete-btn {
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 5px;
+  line-height: 1.4;
+  opacity: 0.75;
+}
+.calendar-complete-btn:hover {
+  opacity: 1;
+}
+.calendar-detail-body {
+  padding: 8px 10px;
+}
+.calendar-detail-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d4ed8;
+  text-decoration: none;
+  margin-bottom: 6px;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.calendar-detail-title:hover {
+  text-decoration: underline;
+}
+.calendar-detail-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.calendar-detail-points {
+  font-size: 12px;
+  color: #6b7280;
+}
