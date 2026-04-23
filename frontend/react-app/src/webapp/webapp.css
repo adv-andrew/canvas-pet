@@ -1205,6 +1205,32 @@ body {
 }
 .canvas-pts {
   font-size: 11px;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+.calendar-detail-body {
+  padding: 8px 10px;
+}
+.calendar-detail-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d4ed8;
+  text-decoration: none;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+.calendar-detail-title:hover {
+  text-decoration: underline;
+  color: #1d4ed8;
+}
+.calendar-detail-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.calendar-detail-points {
+  font-size: 12px;
   color: #6b7280;
 }
 .app-rp-badge {
