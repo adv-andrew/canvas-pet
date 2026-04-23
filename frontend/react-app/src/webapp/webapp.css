@@ -976,7 +976,7 @@ body {
 }
 
 .calendar-mini-card.active {
-  background: #fee2e2;
+  background: var(--cp-primary-faint);
 }
 
 .calendar-mini-card.submitted {
