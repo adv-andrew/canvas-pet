@@ -1,0 +1,13 @@
+# TypeScript build artifacts
+*.tsbuildinfo
+
+# Dependencies
+node_modules
+
+# Environment variables
+.env
+.env.development
+.env.production
+
+# Next.js build output
+.next
